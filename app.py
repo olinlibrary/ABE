@@ -53,7 +53,7 @@ def calendarRead():
 def calendarUpdate():
     print("Received event from client:")
     event = request.get_json(force=True)
-    print(event)
+    print(request.form)
     # custom_attribute = request.form['custom_attribute']
 
     collection = db['calendar']
@@ -87,14 +87,16 @@ def calendarUpdate():
         event_id = event['id']
         record_id = collection.update({'_id': event_id}, event)  # Update record
     else:
-        record_id = collection.insert(event) # Insert record
+        record_id = collection.insert(event)  # Insert record
 
     # Return the ID of the added (or updated) calendar entry
-    output = {'id': record_id}
+    output = {'id': str(record_id)}
+
 
     # Output in JSON
-    outputStr = json.dumps(str(output))
-    return jsonify(data='yay!')
+    response = jsonify(output)
+    response.headers['Access-Control-Allow-Origin'] = '*'  # Allows running client and server on same computer
+    return response
     return render_template('{{!output}}', output=outputStr)
 
 
