@@ -4,7 +4,7 @@ import os
 from flask import Flask, render_template, request, jsonify
 from bson.objectid import ObjectId
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 import importlib
 
 import logging
@@ -15,18 +15,17 @@ import pdb
 
 app = Flask(__name__)
 
-# # connect to MongoDB
-# if os.getenv('MONGO_URI', False):  # use env variable first
-#     client = MongoClient(os.environ.get('MONGO_URI'))
-#     logging.info("Using environment variable for MongoDB URI")
-# elif os.path.isfile("mongo_config.py"):  # then check for config file
-#     from mongo_config import mongo_uri
-#     client = MongoClient(mongo_uri)
-#     logging.info("Using config file for MongoDB URI")
-# else:  # use localhost otherwise
-#     client = MongoClient()
-#     logging.info("Using localhost for MongoDB URI")
-client = MongoClient()
+# connect to MongoDB
+if os.getenv('MONGO_URI', False):  # use env variable first
+    client = MongoClient(os.environ.get('MONGO_URI'))
+    logging.info("Using environment variable for MongoDB URI")
+elif os.path.isfile("mongo_config.py"):  # then check for config file
+    from mongo_config import mongo_uri
+    client = MongoClient(mongo_uri)
+    logging.info("Using config file for MongoDB URI")
+else:  # use localhost otherwise
+    client = MongoClient()
+    logging.info("Using localhost for MongoDB URI")
 
 # Database organization
 db_setup = {
@@ -48,10 +47,10 @@ def calendarRead():
     # pdb.set_trace()
     # format start/end as ms since epoch
 
-    date_to_ms = lambda d: datetime.strptime(d, '%Y-%m-%d').timestamp() * 1000
+    date_to_dt = lambda d: datetime.strptime(d, '%Y-%m-%d')
 
-    start = date_to_ms(request.form['start'])
-    end = date_to_ms(request.form['end'])
+    start = date_to_dt(request.form['start'])
+    end = date_to_dt(request.form['end'])
 
     collection = db[db_setup['events_collection']]
 
@@ -96,7 +95,8 @@ def calendarUpdate():
 
     # Convert ISO strings to python datetimes to be represented as mongoDB Dates
     # timezones not taken into consideration
-    iso_to_dt = lambda s: datetime.strptime(s, "%Y-%m-%dT%H:%M:%S.%fZ")
+    # TODO: have frontend format dates correctly
+    iso_to_dt = lambda s: datetime.strptime(s, "%Y-%m-%dT%H:%M:%S.%fZ") - timedelta(hours=4)
     event['start'] = iso_to_dt(event['start'])
     if 'end' in event and event['end'] is not None:
         event['end'] = iso_to_dt(event['end'])
@@ -116,7 +116,7 @@ def calendarUpdate():
     # pdb.set_trace()
     # Output in JSON
     response = jsonify(output)
-    response.headers['Access-Control-Allow-Origin', '*']  # Allows running client and server on same computer
+    response.headers.add('Access-Control-Allow-Origin', '*')  # Allows running client and server on same computer
     return response
 
 
