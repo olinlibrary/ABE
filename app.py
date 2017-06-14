@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from pymongo import MongoClient
 import os
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, make_response
 from bson.objectid import ObjectId
 import json
 from datetime import datetime
@@ -58,7 +58,7 @@ def sample_calendar_event(collection):
     collection.insert_one(event1)
     collection.insert_one(event2)
 
-
+@app.route('/icsFeed/')
 def icsFeed():
     db.calendar.delete_many({})
     collection = db['calendar']
@@ -77,14 +77,23 @@ def icsFeed():
         vevent.add('description', event['description'])
         vevent.add('dtstart', event['start'])
         vevent.add('dtend', event['end'])
+        vevent.add('attendee', 'MAILTO:emily.lepert@gmail.com')
 
         cal.add_component(vevent)
 
+    '''
     file = open("testfile.ics","wb") 
     file.write(cal.to_ical())
     file.close()
+    '''
+    response =cal.to_ical()
+    return Response(response,
+                       mimetype="text/plain",
+                       headers={"Content-Disposition":
+                                    "attachment;filename=test.txt"})
+    #return response
 
-icsFeed()
+#icsFeed()
 
 @app.route('/calendarRead', methods=['POST'])
 def calendarRead():
