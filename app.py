@@ -12,6 +12,8 @@ logging.basicConfig(level=logging.DEBUG)
 
 import pdb
 
+from icalendar import Calendar, Event
+
 app = Flask(__name__)
 
 # connect to MongoDB
@@ -32,8 +34,57 @@ db_setup = {
     "events_collection": "calendar",  # collection that holds events
 }
 
-db = client[db_setup['name']]
+#db = client[db_setup['name']]
+db = client.fullcalendar_test
 
+
+def sample_calendar_event(collection):
+    event1 = {
+        "title" : "Friday Funday",
+        "start" : datetime(2017,6,16,9,15,0),
+        "end" : datetime(2017,6,16,17,0,0),
+        "location": "Library",
+        "description": "bblkb",
+        "visibility": "True"
+    }
+    event2 = {
+        "title" : "Sunday Sundae",
+        "start" : datetime(2017,6,18,9,15,0),
+        "end" : datetime(2017,6,18,17,0,0),
+        "location": "Outside",
+        "description": "Funies",
+        "visibility": "True"
+    }
+    collection.insert_one(event1)
+    collection.insert_one(event2)
+
+
+def icsFeed():
+    db.calendar.delete_many({})
+    collection = db['calendar']
+    sample_calendar_event(collection)
+    cal = Calendar()
+    recs = collection.find() # Can add filter here for customer or calendar ID, etc
+    for rec in recs:
+        event = rec
+        # Replace the ID with its string version, since the object is not serializable this way
+        event['id'] = str(rec['_id'])
+        del(event['_id'])
+
+        vevent = Event()
+        vevent.add('summary', event['title'])
+        vevent.add('location', event['location'])
+        vevent.add('description', event['description'])
+        vevent.add('dtstart', event['start'])
+        vevent.add('dtend', event['end'])
+
+        cal.add_component(vevent)
+
+    file = open("testfile.ics","wb") 
+    file.write(cal.to_ical())
+    file.close()
+
+icsFeed()
 
 @app.route('/calendarRead', methods=['POST'])
 def calendarRead():
@@ -130,6 +181,13 @@ def calendarDelete():
         event_id = ObjectId(record_id)
         collection.remove({'_id': event_id}) # Delete record
         logging.debug("Deleted entry {}".format(output["id"]))
+
+event = {
+    "title" : "Friday Funday",
+
+}
+
+
 
 
 if __name__ == '__main__':
