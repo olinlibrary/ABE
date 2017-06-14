@@ -36,6 +36,11 @@ db_setup = {
 db = client[db_setup['name']]
 
 
+@app.route('/')
+def welcomePage():
+    return render_template('index.html')
+
+
 @app.route('/calendarRead', methods=['POST'])
 def calendarRead():
     custom_attribute = request.form['custom_attribute']
