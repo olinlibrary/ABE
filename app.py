@@ -53,34 +53,25 @@ def calendarRead():
 def calendarUpdate():
     print("Received event from client:")
     event = request.get_json(force=True)
-    print(request.form)
+    print(request.get_json)
     # custom_attribute = request.form['custom_attribute']
 
     collection = db['calendar']
 
-    # All of this is handled client-side
-    #  event = {}
-    # event['title'] = request.form['title']
-    #
-    # # allDay is received from the POST object as a string - change to boolean
-    # allDay_str = request.form['allDay']
-    # if(allDay_str == "true"):
-    #     event['allDay'] = True
-    # else:
-    #     event['allDay'] = False
-    #
-    # # We're receiving dates in ms since epoch, so divide by 1000
-    # event['start'] = int(request.form['start'])/1000
-    #
-    # # Set end-date if it exists
-    # end = request.form['end']
-    # if (end is not None and end != ''):
-    #     event['end'] = int(end)/1000
-    #
-    # # Set entry colour if it exists
-    # color = request.form['color']
-    # if (color is not None and color != ''):
-    #     event['color'] = request.form['color']
+    # allDay is received from the POST object as a string - change to boolean
+    allDay_str = request.form['allDay']
+    if(allDay_str == "true"):
+        event['allDay'] = True
+    else:
+        event['allDay'] = False
+
+    # Convert ISO strings to python datetimes to be represented as mongoDB Dates
+    # timezones not taken into consideration
+    iso_to_dt = lambda s: datetime.strptime(s, "%Y-%m-%dT%H:%M:%S")
+    event['start'] = iso_to_dt(event['start'])
+    if (end is not None and end != ''):
+        event['end'] = iso_to_dt(event['end'])
+
 
     # Add or update collection record, determined by whether it has an ID or not
     if 'id' in event and event['id'] != '':
@@ -95,9 +86,8 @@ def calendarUpdate():
 
     # Output in JSON
     response = jsonify(output)
-    response.headers['Access-Control-Allow-Origin'] = '*'  # Allows running client and server on same computer
+    response.headers['Access-Control-Allow-Origin', '*']  # Allows running client and server on same computer
     return response
-    return render_template('{{!output}}', output=outputStr)
 
 
 @app.route('/calendarDelete', methods=['POST'])
@@ -115,5 +105,5 @@ def calendarDelete():
 if __name__ == '__main__':
    app.debug = True  # updates the page as the code is saved
    HOST = '0.0.0.0' if 'PORT' in os.environ else '127.0.0.1'
-   PORT = int(os.environ.get('PORT', 4000))
+   PORT = int(os.environ.get('PORT', 3000))
    app.run(host='0.0.0.0', port=PORT)
