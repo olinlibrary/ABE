@@ -4,30 +4,42 @@
     <meta charset="utf-8">
     <title>ABE</title>
     <style media="screen">
-      #head {
+      h1 {
+        /*font-size: 64px;*/
+        /*text-align: center;*/
+        /*position: relative;*/
+        margin: 0;
+      }
+
+      .container {
+        padding: 0;
+        margin: auto;
+        display: block;
         position: absolute;
-        top: 50px;
-        left: 300px;
-        width: 100px;
-        height: 100px;
-        border-radius: 50px;
-        background-color: #E8CF3F;
+        top: 30vh;
+        bottom: 0;
+        left: 30vw;
+        right: 70vw;
+        height: 100px
+        box-shadow: 0 10px 20px
       }
 
       #hat {
-        position: absolute;
-        top: 40px;
-        left: 425px;
+        position: relative;
+        top: 0px;
+        /*left: 425px;*/
+        left: 10px;
+        right: 0;
         width: 50px;
-        height: 40px;
+        height: 100px;
         border-radius: 5px;
         background-color: black;
       }
 
       #rim {
-        position: absolute;
-        top: 70px;
-        left: 415px;
+        position: relative;
+        top: -10px;
+        /*left: 415px;*/
         width: 70px;
         height: 10px;
         border-radius: 3px;
@@ -36,7 +48,10 @@
     </style>
   </head>
   <body>
-    <div id="hat"></div>
-    <div id="rim"><div>
+    <div class="container">
+      <div id="hat"></div>
+      <div id="rim"></div>
+      <h1>ABE</h1>
+    </div>
   </body>
 </html>
