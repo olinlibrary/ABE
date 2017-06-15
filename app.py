@@ -38,43 +38,54 @@ db_setup = {
 }
 
 db = client[db_setup['name']]
-#db = client.fullcalendar_test
+
 
 @app.route('/icsFeed/<username>')
 def icsFeed(username):
     collection = db['calendar']
-    cal = Calendar()
     recs = collection.find() # Can add filter here for customer or calendar ID, etc
+    
+
+    response = create_calendar(recs)
+    cd = "attachment;filename="+username+".ics"
+    return Response(response,
+                       mimetype="text/calendar",
+                       headers={"Content-Disposition": cd})
+
+
+def create_calendar(recs):
+    cal = Calendar()
     for rec in recs:
         event = rec
         # Replace the ID with its string version, since the object is not serializable this way
         event['id'] = str(rec['_id'])
         del(event['_id'])
-
+        #pdb.set_trace()
         vevent = Event()
         vevent.add('summary', event['title'])
         vevent.add('location', event['location'])
         vevent.add('description', event['description'])
         vevent.add('dtstart', event['start'])
-        vevent.add('dtend', event['end'])
+        if event['end'] is not None:
+            vevent.add('dtend', event['end'])
         #vevent.add('attendee', 'MAILTO:emily.lepert@gmail.com')
 
         cal.add_component(vevent)
-        print(event)
 
-    '''
-    file = open("testfile.ics","wb") 
-    file.write(cal.to_ical())
-    file.close()
-    '''
     response = cal.to_ical()
-    cd = "attachment;filename="+username+".ics"
+    return response
+
+
+@app.route('/icsFeed/label/<label>') #, methods=['GET', 'POST']
+def label_icsFeed(label):
+    collection = db['calendar']
+    recs = collection.find({'visibility':label}) # Can add filter here for customer or calendar ID, etc
+    response = create_calendar(recs)
+    cd = "attachment;filename="+label+".ics"
     return Response(response,
                        mimetype="text/calendar",
                        headers={"Content-Disposition": cd})
-    #return response
 
-#icsFeed()
 
 @app.route('/')
 def splash():
