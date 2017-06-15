@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from pymongo import MongoClient
 import os
-from flask import Flask, render_template, request, jsonify, make_response
+from flask import Flask, render_template, request, jsonify, make_response, Response
 from bson.objectid import ObjectId
 import json
 from datetime import datetime
@@ -49,8 +49,8 @@ def sample_calendar_event(collection):
     }
     event2 = {
         "title" : "Sunday Sundae",
-        "start" : datetime(2017,6,18,9,15,0),
-        "end" : datetime(2017,6,18,17,0,0),
+        "start" : datetime(2017,6,25,9,15,0),
+        "end" : datetime(2017,6,25,17,0,0),
         "location": "Outside",
         "description": "Funies",
         "visibility": "True"
@@ -58,7 +58,7 @@ def sample_calendar_event(collection):
     collection.insert_one(event1)
     collection.insert_one(event2)
 
-@app.route('/icsFeed/')
+@app.route('/icsFeed')
 def icsFeed():
     db.calendar.delete_many({})
     collection = db['calendar']
@@ -86,11 +86,12 @@ def icsFeed():
     file.write(cal.to_ical())
     file.close()
     '''
-    response =cal.to_ical()
+    response = cal.to_ical()
+    print('stuff')
     return Response(response,
-                       mimetype="text/plain",
+                       mimetype="text/calendar",
                        headers={"Content-Disposition":
-                                    "attachment;filename=test.txt"})
+                                    "attachment;filename=test.ics"})
     #return response
 
 #icsFeed()
