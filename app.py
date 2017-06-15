@@ -43,7 +43,6 @@ def welcomePage():
 
 @app.route('/calendarRead', methods=['POST'])
 def calendarRead():
-    custom_attribute = request.form['custom_attribute']
     # pdb.set_trace()
     # format start/end as ms since epoch
 
