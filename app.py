@@ -41,16 +41,16 @@ db = client.fullcalendar_test
 def sample_calendar_event(collection):
     event1 = {
         "title" : "Friday Funday",
-        "start" : datetime(2017,6,16,9,15,0),
-        "end" : datetime(2017,6,16,17,0,0),
+        "start" : datetime(2017,6,13,9,15,0),
+        "end" : datetime(2017,6,13,17,0,0),
         "location": "Library",
         "description": "bblkb",
         "visibility": "True"
     }
     event2 = {
         "title" : "Sunday Sundae",
-        "start" : datetime(2017,6,25,9,15,0),
-        "end" : datetime(2017,6,25,17,0,0),
+        "start" : datetime(2017,6,18,9,15,0),
+        "end" : datetime(2017,6,18,17,0,0),
         "location": "Outside",
         "description": "Funies",
         "visibility": "True"
