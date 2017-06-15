@@ -37,8 +37,8 @@ db_setup = {
     "events_collection": "calendar",  # collection that holds events
 }
 
-#db = client[db_setup['name']]
-db = client.fullcalendar_test
+db = client[db_setup['name']]
+#db = client.fullcalendar_test
 
 @app.route('/icsFeed/<username>')
 def icsFeed(username):
