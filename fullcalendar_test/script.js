@@ -5,13 +5,13 @@ $(document).ready(function() {
   $('#calendar').fullCalendar({
       // put your options and callbacks here
       events: {
-    	    url: 'http://abeweb.herokuapp.com/calendarRead',
+    	    url: 'https://abeweb-pr-7.herokuapp.com/calendarRead',
     	    type: 'POST',
     	    data: {
     	        custom_attribute: 'acbd'
     	    },
     	    error: function() {
-    	        alert('There was an error while fetching events!');
+    	        console.log('There was an error while fetching events!');
     	    }
       }
   })
@@ -21,7 +21,7 @@ $(document).ready(function() {
 });
 
 function saveEventUpdate(event) {
-    url = 'http://abeweb.herokuapp.com/calendarUpdate'
+    url = 'https://abeweb-pr-7.herokuapp.com/calendarUpdate'
 
     // Create a copy of the event object
     data = $.extend({}, event);
