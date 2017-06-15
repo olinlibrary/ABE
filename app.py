@@ -39,8 +39,8 @@ db = client[db_setup['name']]
 
 
 @app.route('/')
-def welcomePage():
-    return render_template('index.html')
+def splash():
+    return render_template('splash.html')
 
 
 @app.route('/calendarRead', methods=['POST'])
