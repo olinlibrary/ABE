@@ -43,7 +43,6 @@ db = client.fullcalendar_test
 @app.route('/icsFeed/<username>')
 def icsFeed(username):
     collection = db['calendar']
-    sample_calendar_event(collection)
     cal = Calendar()
     recs = collection.find() # Can add filter here for customer or calendar ID, etc
     for rec in recs:
