@@ -1,0 +1,20 @@
+{
+  "name": "ABE",
+  "scripts": {
+  },
+  "env": {
+    "MONGO_URI": {
+      "required": true
+    }
+  },
+  "formation": {
+  },
+  "addons": [
+
+  ],
+  "buildpacks": [
+    {
+      "url": "heroku/python"
+    }
+  ]
+}
