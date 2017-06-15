@@ -38,30 +38,8 @@ db_setup = {
 #db = client[db_setup['name']]
 db = client.fullcalendar_test
 
-
-def sample_calendar_event(collection):
-    event1 = {
-        "title" : "Friday Funday",
-        "start" : datetime(2017,6,16,9,15,0),
-        "end" : datetime(2017,6,16,17,0,0),
-        "location": "Library",
-        "description": "bblkb",
-        "visibility": "True"
-    }
-    event2 = {
-        "title" : "Sunday Sundae",
-        "start" : datetime(2017,6,25,9,15,0),
-        "end" : datetime(2017,6,25,17,0,0),
-        "location": "Outside",
-        "description": "Funies",
-        "visibility": "True"
-    }
-    collection.insert_one(event1)
-    collection.insert_one(event2)
-
 @app.route('/icsFeed/<username>')
 def icsFeed(username):
-    db.calendar.delete_many({})
     collection = db['calendar']
     sample_calendar_event(collection)
     cal = Calendar()
