@@ -58,8 +58,8 @@ def sample_calendar_event(collection):
     collection.insert_one(event1)
     collection.insert_one(event2)
 
-@app.route('/icsFeed')
-def icsFeed():
+@app.route('/icsFeed/<username>')
+def icsFeed(username):
     db.calendar.delete_many({})
     collection = db['calendar']
     sample_calendar_event(collection)
@@ -87,10 +87,10 @@ def icsFeed():
     file.close()
     '''
     response = cal.to_ical()
+    cd = "attachment;filename="+username+".ics"
     return Response(response,
                        mimetype="text/calendar",
-                       headers={"Content-Disposition":
-                                    "attachment;filename=newcalendar.ics"})
+                       headers={"Content-Disposition": cd})
     #return response
 
 #icsFeed()
