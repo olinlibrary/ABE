@@ -57,9 +57,10 @@ def icsFeed(username):
         vevent.add('description', event['description'])
         vevent.add('dtstart', event['start'])
         vevent.add('dtend', event['end'])
-        vevent.add('attendee', 'MAILTO:emily.lepert@gmail.com')
+        #vevent.add('attendee', 'MAILTO:emily.lepert@gmail.com')
 
         cal.add_component(vevent)
+        print(event)
 
     '''
     file = open("testfile.ics","wb") 
