@@ -87,11 +87,10 @@ def icsFeed():
     file.close()
     '''
     response = cal.to_ical()
-    print('stuff')
     return Response(response,
                        mimetype="text/calendar",
                        headers={"Content-Disposition":
-                                    "attachment;filename=test.ics"})
+                                    "attachment;filename=newcalendar.ics"})
     #return response
 
 #icsFeed()
