@@ -5,7 +5,11 @@ $(document).ready(function() {
   $('#calendar').fullCalendar({
       // put your options and callbacks here
       events: {
+<<<<<<< HEAD
     	    url: 'https://abeweb-pr-7.herokuapp.com/calendarRead',
+=======
+    	    url: 'http://abeweb.herokuapp.com/calendarRead',
+>>>>>>> dev
     	    type: 'POST',
     	    data: {
     	        custom_attribute: 'acbd'
@@ -21,7 +25,11 @@ $(document).ready(function() {
 });
 
 function saveEventUpdate(event) {
+<<<<<<< HEAD
     url = 'https://abeweb-pr-7.herokuapp.com/calendarUpdate'
+=======
+    url = 'http://abeweb.herokuapp.com/calendarUpdate'
+>>>>>>> dev
 
     // Create a copy of the event object
     data = $.extend({}, event);
