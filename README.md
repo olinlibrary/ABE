@@ -22,3 +22,7 @@ source ./venv/bin/activate
 ```shell
 pip install -r requirements.txt
 ```
+
+#### mongo_config.py
+
+In order to connect to a mongodb instance other than your localhost, you can create a copy of [`mongo_config_sample.py`](mongo_config_sample.py) called `mongo_config.py`. This configuration file is gitignored and can specify a uri for mongodb to connect to.
