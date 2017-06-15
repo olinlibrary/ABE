@@ -3,9 +3,7 @@ from pymongo import MongoClient
 import os
 from flask import Flask, render_template, request, jsonify, make_response, Response
 from bson.objectid import ObjectId
-import json
 from datetime import datetime, timedelta
-import importlib
 
 import logging
 FORMAT = "%(levelname)s:ABE: _||_ %(message)s"
@@ -18,13 +16,17 @@ from icalendar import Calendar, Event
 app = Flask(__name__)
 
 # connect to MongoDB
-if os.getenv('MONGO_URI', False):  # use env variable first
+if os.getenv('MONGO_URI', False):  # try env variable first
     client = MongoClient(os.environ.get('MONGO_URI'))
     logging.info("Using environment variable for MongoDB URI")
 elif os.path.isfile("mongo_config.py"):  # then check for config file
-    from mongo_config import mongo_uri
-    client = MongoClient(mongo_uri)
-    logging.info("Using config file for MongoDB URI")
+    import mongo_config
+    if mongo_config.use_local:
+        client = MongoClient()
+        logging.info("Using localhost for MongoDB URI")
+    else:
+        client = MongoClient(mongo_config.mongo_uri)
+        logging.info("Using config file for MongoDB URI")
 else:  # use localhost otherwise
     client = MongoClient()
     logging.info("Using localhost for MongoDB URI")
@@ -75,8 +77,8 @@ def icsFeed(username):
 #icsFeed()
 
 @app.route('/')
-def welcomePage():
-    return render_template('index.html')
+def splash():
+    return render_template('splash.html')
 
 
 @app.route('/calendarRead', methods=['POST'])
