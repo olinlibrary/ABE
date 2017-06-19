@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from pymongo import MongoClient
 import os
+import random
 from flask import Flask, render_template, request, jsonify, make_response, Response
 from bson.objectid import ObjectId
 from datetime import datetime, timedelta
@@ -11,7 +12,7 @@ logging.basicConfig(level=logging.DEBUG, format=FORMAT)
 
 import pdb
 
-from icalendar import Calendar, Event
+from icalendar import Calendar, Event, vCalAddress, vText
 
 app = Flask(__name__)
 
@@ -38,7 +39,20 @@ db_setup = {
 }
 
 db = client[db_setup['name']]
+ics_database = {{
+    'title':'Book Club',
+    'location': 'Quiet Reading Room',
+    'description': 'reading cool books',
+    'dtstart': '20170619T150000Z',
+    'dtend': '20170619T160000Z',
+    'reccurence' : {
+        'frequency' : 'WEEKLY',
+        'interval' : '1',
+        'count' : '7',
+        'BYDAY' : 'MO'
+        }, 
 
+}}
 
 def create_calendar(events):
     #initialize calendar object
@@ -51,12 +65,49 @@ def create_calendar(events):
         new_event.add('dtstart', event['start'])
         if event['end'] is not None:
             new_event.add('dtend', event['end'])
+
+        collection.find({""})
+        reccurence = event['reccurence']
+        if reccurence:
+            frequency = reccurence['frequency']
+            interval = reccurence['interval']
+            rec_ics_string = 'FREQ='+frequency+';INTERVAL='+interval
+
+            if reccurence['until']:
+                rec_ics_string += ';UNTIL='+reccurrence['until']
+            elif reccurence['count']:
+                rec_ics_string += ';COUNT='+reccurence['count']
+
+            if frequency == 'WEEKLY':
+                rec_ics_string += ';BYDAY='+reccurence['BYDAY']
+
+            if frequency == 'MONTHLY':
+                if reccurence['BYDAY']:
+                    rec_ics_string += ';BYDAY='+reccurence['BYDAY']
+                elif reccurence['BYMONTHDAY']:
+                    rec_ics_string += ';BYMONTHDAY='+reccurence['BYMONTHDAY']
+
+            if frequency == 'YEARLY':
+                if reccurence['BYMONTH']:
+                    rec_ics_string += ';BYMONTH='+reccurence['BYMONTH']
+                elif reccurence['BYYEARDAY']:
+                    rec_ics_string += ';BYYEARDAY='+reccurence['BYYEARDAY']
+
+            new_event.add('RRULE', rec_ics_string)
+
+        new_event.add('TRANSP', 'OPAQUE')
+
+        iso_to_dt = lambda s: datetime.strptime(s, "%Y-%m-%dT%H:%M:%S.%fZ")
+        uid = str(iso_to_dt(datetime.datetime.now()))+'-'+str(random.randint(0,10000000))
+        new_event.add('UID', uid)
         #vevent.add('attendee', 'MAILTO:emily.lepert@gmail.com')
 
         cal.add_component(new_event)
 
     response = cal.to_ical()
     return response
+
+print(create_calendar(ics_database))
 
 @app.route('/icsFeed/<username>')
 def icsFeed(username):
