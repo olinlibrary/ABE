@@ -2,6 +2,7 @@
 from pymongo import MongoClient
 import os
 from flask import Flask, render_template, request, jsonify
+from flask_cors import CORS, cross_origin
 from bson.objectid import ObjectId
 from datetime import datetime, timedelta
 from pprint import pprint, pformat
@@ -13,6 +14,7 @@ logging.basicConfig(level=logging.DEBUG, format=FORMAT)
 import pdb
 
 app = Flask(__name__)
+CORS(app)  # enable CORS default settings on all routes
 
 # connect to MongoDB
 if os.getenv('MONGO_URI', False):  # try env variable first
@@ -78,9 +80,7 @@ def calendarRead():
     # outputStr = json.dumps(events)
     # pdb.set_trace()
     logging.debug("Found {} events for start {} and end {}".format(len(events), request.form['start'], request.form['end']))
-    response = jsonify(events)  # TODO: apply this globally
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    return response
+    return jsonify(events)
 
 
 @app.route('/calendarUpdate', methods=['POST'])
@@ -119,9 +119,7 @@ def calendarUpdate():
     print('neat')
     # pdb.set_trace()
     # Output in JSON
-    response = jsonify(output)
-    response.headers.add('Access-Control-Allow-Origin', '*')  # Allows running client and server on same computer
-    return response
+    return jsonify(output)
 
 
 @app.route('/calendarDelete', methods=['POST'])
@@ -146,9 +144,7 @@ def labels():
         logging.debug("Found {} labels".format(len(results)))
         # format return based on Accept header
         if request.headers['Accept'] == 'application/json':
-            response = jsonify(results)
-            response.headers.add('Access-Control-Allow-Origin', '*')
-            return response
+            return jsonify(results)
         else:
             return pformat(results), {'Content-Type': 'text; charset=utf-8'}
     elif request.method == 'POST':
