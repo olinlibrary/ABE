@@ -4,6 +4,7 @@ import os
 from flask import Flask, render_template, request, jsonify
 from bson.objectid import ObjectId
 from datetime import datetime, timedelta
+from pprint import pprint, pformat
 
 import logging
 FORMAT = "%(levelname)s:ABE: _||_ %(message)s"
@@ -33,9 +34,11 @@ else:  # use localhost otherwise
 db_setup = {
     "name": "backend-testing",  # name of database
     "events_collection": "calendar",  # collection that holds events
+    "labels_collection": "labels",
 }
 
 db = client[db_setup['name']]
+logging.info("Using database {}".format(db_setup['name']))
 
 
 @app.route('/')
@@ -132,6 +135,34 @@ def calendarDelete():
         event_id = ObjectId(record_id)
         collection.remove({'_id': event_id}) # Delete record
         logging.debug("Deleted entry {}".format(output["id"]))
+
+
+@app.route('/labels', methods=['GET', 'POST'])
+def labels():
+    collection = db[db_setup['labels_collection']]
+    if request.method == 'GET':
+        results = collection.find({})
+        results = [result for result in results]
+        logging.debug("Found {} labels".format(len(results)))
+        # format return based on Accept header
+        if request.headers['Accept'] == 'application/json':
+            response = jsonify(results)
+            response.headers.add('Access-Control-Allow-Origin', '*')
+            return response
+        else:
+            return pformat(results), {'Content-Type': 'text; charset=utf-8'}
+    elif request.method == 'POST':
+        new_label = {}
+        if request.form:
+            new_label = dict(request.form)
+
+        collection.insert(new_label)
+        return 'label added'
+
+
+@app.route('/labels/add', methods=['GET', 'POST'])
+def add_label_page():
+    return render_template('add_label.html')
 
 
 if __name__ == '__main__':
