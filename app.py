@@ -33,54 +33,47 @@ else:  # use localhost otherwise
 
 # Database organization
 db_setup = {
-    "name": "backend-testing",  # name of database
+    "name": "labels-testing",  # name of database
     "events_collection": "calendar",  # collection that holds events
 }
 
 db = client[db_setup['name']]
 
 
+def create_calendar(events):
+    #initialize calendar object
+    cal = Calendar()
+    for event in events:
+        new_event = Event()
+        new_event.add('summary', event['title'])
+        new_event.add('location', event['location'])
+        new_event.add('description', event['description'])
+        new_event.add('dtstart', event['start'])
+        if event['end'] is not None:
+            new_event.add('dtend', event['end'])
+        #vevent.add('attendee', 'MAILTO:emily.lepert@gmail.com')
+
+        cal.add_component(new_event)
+
+    response = cal.to_ical()
+    return response
+
 @app.route('/icsFeed/<username>')
 def icsFeed(username):
     collection = db['calendar']
-    recs = collection.find() # Can add filter here for customer or calendar ID, etc
-    
-
-    response = create_calendar(recs)
+    events = collection.find() # Can add filter here for customer or calendar ID, etc
+    response = create_calendar(events)
     cd = "attachment;filename="+username+".ics"
     return Response(response,
                        mimetype="text/calendar",
                        headers={"Content-Disposition": cd})
 
 
-def create_calendar(recs):
-    cal = Calendar()
-    for rec in recs:
-        event = rec
-        # Replace the ID with its string version, since the object is not serializable this way
-        event['id'] = str(rec['_id'])
-        del(event['_id'])
-        #pdb.set_trace()
-        vevent = Event()
-        vevent.add('summary', event['title'])
-        vevent.add('location', event['location'])
-        vevent.add('description', event['description'])
-        vevent.add('dtstart', event['start'])
-        if event['end'] is not None:
-            vevent.add('dtend', event['end'])
-        #vevent.add('attendee', 'MAILTO:emily.lepert@gmail.com')
-
-        cal.add_component(vevent)
-
-    response = cal.to_ical()
-    return response
-
-
 @app.route('/icsFeed/label/<label>') #, methods=['GET', 'POST']
 def label_icsFeed(label):
     collection = db['calendar']
-    recs = collection.find({'visibility':label}) # Can add filter here for customer or calendar ID, etc
-    response = create_calendar(recs)
+    events = collection.find({'labels':label}) # Can add filter here for customer or calendar ID, etc
+    response = create_calendar(events)
     cd = "attachment;filename="+label+".ics"
     return Response(response,
                        mimetype="text/calendar",
