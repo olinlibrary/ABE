@@ -4,6 +4,7 @@ import os
 import random
 from flask import Flask, render_template, request, jsonify, make_response, Response
 from bson.objectid import ObjectId
+from bson import json_util
 from datetime import datetime, timedelta
 
 import logging
@@ -13,6 +14,9 @@ logging.basicConfig(level=logging.DEBUG, format=FORMAT)
 import pdb
 
 from icalendar import Calendar, Event, vCalAddress, vText
+from dateutil.rrule import rrule, MONTHLY, WEEKLY, DAILY, YEARLY, HOURLY, MINUTELY
+import dateutil.parser
+import json
 
 app = Flask(__name__)
 
@@ -34,25 +38,41 @@ else:  # use localhost otherwise
 
 # Database organization
 db_setup = {
-    "name": "labels-testing",  # name of database
+    "name": "rec-test",  # name of database
     "events_collection": "calendar",  # collection that holds events
 }
 
 db = client[db_setup['name']]
-ics_database = {{
-    'title':'Book Club',
-    'location': 'Quiet Reading Room',
-    'description': 'reading cool books',
-    'dtstart': '20170619T150000Z',
-    'dtend': '20170619T160000Z',
-    'reccurence' : {
-        'frequency' : 'WEEKLY',
-        'interval' : '1',
-        'count' : '7',
-        'BYDAY' : 'MO'
-        }, 
-
-}}
+'''ics_database = {
+    {
+        'title':'Book Club',
+        'location': 'Quiet Reading Room',
+        'description': 'reading cool books',
+        'start': ISODate("2017-06-19T15:00:00Z"),
+        'end': ISODate("2017-06-19T16:00:00Z"),
+        'endrecurrence' : ISODate("2017-07-31"),
+        'recurrence' : {
+            'frequency' : 'WEEKLY',
+            'interval' : '1',
+            'count' : '7',
+            'BYDAY' : "MO"
+            }
+    },
+    {
+        'title':'Newsch Celebration',
+        'location': 'Library',
+        'description': 'Doing cool newsch things',
+        'start': ISODate("2017-06-21T15:00:00Z"),
+        'end': ISODate("2017-06-21T16:00:00Z"),
+        'endrecurrence' : ISODate("2017-07-12"),
+        'recurrence' : {
+            'frequency' : 'WEEKLY',
+            'interval' : '1',
+            'count' : '4',
+            'BYDAY' : "WE"
+            }
+    },
+}'''
 
 def create_calendar(events):
     #initialize calendar object
@@ -66,53 +86,126 @@ def create_calendar(events):
         if event['end'] is not None:
             new_event.add('dtend', event['end'])
 
-        collection.find({""})
-        reccurence = event['reccurence']
-        if reccurence:
-            frequency = reccurence['frequency']
-            interval = reccurence['interval']
-            rec_ics_string = 'FREQ='+frequency+';INTERVAL='+interval
+        #event.find({""})
+        recurrence = event['recurrence']
+        if recurrence:
+            rec_ics_string = {}
+            frequency = recurrence['frequency']
+            interval = recurrence['interval']
+            rec_ics_string['freq'] = frequency
+            rec_ics_string['interval'] = interval
 
-            if reccurence['until']:
-                rec_ics_string += ';UNTIL='+reccurrence['until']
-            elif reccurence['count']:
-                rec_ics_string += ';COUNT='+reccurence['count']
+            if 'until' in recurrence:
+                rec_ics_string['until'] = reccurrence['until']
+            elif 'count' in recurrence:
+                rec_ics_string['count'] = recurrence['count']
 
             if frequency == 'WEEKLY':
-                rec_ics_string += ';BYDAY='+reccurence['BYDAY']
+                rec_ics_string['byday'] = recurrence['BYDAY']
 
             if frequency == 'MONTHLY':
-                if reccurence['BYDAY']:
-                    rec_ics_string += ';BYDAY='+reccurence['BYDAY']
-                elif reccurence['BYMONTHDAY']:
-                    rec_ics_string += ';BYMONTHDAY='+reccurence['BYMONTHDAY']
+                if recurrence['BYDAY']:
+                    rec_ics_string['byday'] = recurrence['BYDAY']
+                elif recurrence['BYMONTHDAY']:
+                    rec_ics_string['bymonthday'] = recurrence['BYMONTHDAY']
 
             if frequency == 'YEARLY':
-                if reccurence['BYMONTH']:
-                    rec_ics_string += ';BYMONTH='+reccurence['BYMONTH']
-                elif reccurence['BYYEARDAY']:
-                    rec_ics_string += ';BYYEARDAY='+reccurence['BYYEARDAY']
+                if recurrence['BYMONTH']:
+                    rec_ics_string['bymonth'] = recurrence['BYMONTH']
+                elif recurrence['BYYEARDAY']:
+                    rec_ics_string['byday'] = recurrence['BYDAY']
 
             new_event.add('RRULE', rec_ics_string)
 
         new_event.add('TRANSP', 'OPAQUE')
 
-        iso_to_dt = lambda s: datetime.strptime(s, "%Y-%m-%dT%H:%M:%S.%fZ")
-        uid = str(iso_to_dt(datetime.datetime.now()))+'-'+str(random.randint(0,10000000))
+        #str(iso_to_dt(str(datetime.now())))
+        iso_to_dt = lambda s: datetime.strptime(s, "%Y-%m-%dT%H:%M:%S.%f")
+        uid = str(iso_to_dt(str(datetime.now().isoformat())))+'-'+str(random.randint(0,10000000))
         new_event.add('UID', uid)
         #vevent.add('attendee', 'MAILTO:emily.lepert@gmail.com')
 
         cal.add_component(new_event)
 
+
     response = cal.to_ical()
     return response
 
-print(create_calendar(ics_database))
+def pseudo_calendarRead():
+    date_to_dt = lambda d: datetime.strptime(d, '%Y-%m-%d')
+
+    start = datetime(2017,7,1)
+    end = datetime(2017, 7, 30)
+
+    collection = db[db_setup['events_collection']]
+
+    events = []
+
+    # Ensure there is an index on start date
+    collection.ensure_index([('start', 1)])
+
+    # Fetch the event objects from MongoDB
+    recs = collection.find({ '$or': [{'start':{'$gte': start, '$lte': end}}, {'endrecurrence': {'$gte': start}}]}) # Can add filter here for customer or calendar ID, etc
+    
+    for rec in recs:
+        event = rec
+        # Replace the ID with its string version, since the object is not serializable this way
+        event['id'] = str(rec['_id'])
+        del(event['_id'])
+
+        if 'recurrence' in event:
+            recurrence = event['recurrence']
+            if recurrence['frequency'] == 'YEARLY':
+                rFrequency = 0
+            elif recurrence['frequency'] == 'MONTHLY':
+                rFrequency = 1
+            elif recurrence['frequency'] == 'WEEKLY':
+                rFrequency = 2
+            elif recurrence['frequency'] == 'DAILY':
+                rFrequency = 3
+
+            rInterval = recurrence['interval']
+            rCount = recurrence['count'] if 'count' in recurrence else None
+            rUntil = recurrence['until'] if 'until' in recurrence else None
+            rByMonth = recurrence['BYMONTH'] if 'BYMONTH' in recurrence else None
+            rByMonthDay = recurrence['BYMONTHDAY'] if 'BYMONTHDAY' in recurrence else None
+            rByDay = recurrence['BYDAY'] if 'BYDAY' in recurrence else None
+
+            
+            rule_list = list(rrule(freq=rFrequency, count=int(rCount), interval=int(rInterval), until=rUntil, bymonth=rByMonth, \
+                bymonthday=rByMonthDay, byweekday=None, dtstart=event['start']))
+
+            for instance in rule_list:
+
+                if instance >= start and instance < end:
+                    instance = datetime.strptime(str(instance), "%Y-%m-%d %H:%M:%S")
+                    event_end = datetime.strptime(str(event['end']), "%Y-%m-%d %H:%M:%S")
+                    event_start = datetime.strptime(str(event['start']), "%Y-%m-%d %H:%M:%S")
+
+                    print(instance)
+                    fake_object = {}
+                    fake_object['title'] = event['title']
+                    fake_object['location'] = event['location']
+                    fake_object['description'] = event['description']
+                    fake_object['start'] = instance.isoformat()
+                    fake_object['end'] = (event_end-event_start+instance).isoformat()
+                    events.append(json.dumps(fake_object, default=json_util.default))
+        else:
+            events.append(event)
+
+    # outputStr = json.dumps(events)
+    # pdb.set_trace()
+    logging.debug("Found {} events for start {} and end {}".format(len(events), start, end))
+    #response = jsonify(events)  # TODO: apply this globally
+    #response.headers.add('Access-Control-Allow-Origin', '*')
+    return events
+
+print(pseudo_calendarRead())
 
 @app.route('/icsFeed/<username>')
 def icsFeed(username):
     collection = db['calendar']
-    events = collection.find() # Can add filter here for customer or calendar ID, etc
+    events = collection.find({}) # Can add filter here for customer or calendar ID, etc
     response = create_calendar(events)
     cd = "attachment;filename="+username+".ics"
     return Response(response,
