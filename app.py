@@ -51,6 +51,7 @@ db = client[db_setup['name']]
         'start': ISODate("2017-06-19T15:00:00Z"),
         'end': ISODate("2017-06-19T16:00:00Z"),
         'endrecurrence' : ISODate("2017-07-31"),
+        'UID' : '20170619150000-456',
         'recurrence' : {
             'frequency' : 'WEEKLY',
             'interval' : '1',
@@ -65,6 +66,7 @@ db = client[db_setup['name']]
         'start': ISODate("2017-06-21T15:00:00Z"),
         'end': ISODate("2017-06-21T16:00:00Z"),
         'endrecurrence' : ISODate("2017-07-12"),
+        'UID' : '20170619160000-780',
         'recurrence' : {
             'frequency' : 'WEEKLY',
             'interval' : '1',
@@ -134,8 +136,8 @@ def create_calendar(events):
 def pseudo_calendarRead():
     date_to_dt = lambda d: datetime.strptime(d, '%Y-%m-%d')
 
-    start = datetime(2017,7,1)
-    end = datetime(2017, 7, 30)
+    start = datetime(2017,6,1)
+    end = datetime(2017, 7, 1)
 
     collection = db[db_setup['events_collection']]
 
@@ -145,7 +147,15 @@ def pseudo_calendarRead():
     collection.ensure_index([('start', 1)])
 
     # Fetch the event objects from MongoDB
-    recs = collection.find({ '$or': [{'start':{'$gte': start, '$lte': end}}, {'endrecurrence': {'$gte': start}}]}) # Can add filter here for customer or calendar ID, etc
+    recs = collection.find({ 
+        '$or': [
+            {'start':{'$gte': start, '$lte': end}}, 
+            { '$and' : [
+                {'endrecurrence': {'$gte': start}}, 
+                {'start' : {'$lte' : end}}
+            ]}
+        ]
+    }) # Can add filter here for customer or calendar ID, etc
     
     for rec in recs:
         event = rec
@@ -153,7 +163,16 @@ def pseudo_calendarRead():
         event['id'] = str(rec['_id'])
         del(event['_id'])
 
+        event_end = datetime.strptime(str(event['end']), "%Y-%m-%d %H:%M:%S")
+        event_start = datetime.strptime(str(event['start']), "%Y-%m-%d %H:%M:%S")
+
         if 'recurrence' in event:
+            if 'sub_events' in event:
+                for sub_event in event['sub_events']:
+                    if sub_event['start'] <= end and sub_event['end'] >= start:
+                        events.append(sub_event)
+
+
             recurrence = event['recurrence']
             if recurrence['frequency'] == 'YEARLY':
                 rFrequency = 0
@@ -176,20 +195,31 @@ def pseudo_calendarRead():
                 bymonthday=rByMonthDay, byweekday=None, dtstart=event['start']))
 
             for instance in rule_list:
-
+                print(instance)
                 if instance >= start and instance < end:
                     instance = datetime.strptime(str(instance), "%Y-%m-%d %H:%M:%S")
-                    event_end = datetime.strptime(str(event['end']), "%Y-%m-%d %H:%M:%S")
-                    event_start = datetime.strptime(str(event['start']), "%Y-%m-%d %H:%M:%S")
+                    
+                    repeat = False
+                    if 'sub_events' in event:
+                        for individual in event['sub_events']:
+                            indiv = datetime.strptime(str(individual['recurrence-id']), "%Y-%m-%dT%H:%M:%SZ")
+                            print('-------------')
+                            print(instance)
+                            print(indiv)
+                            print('-------------')
 
-                    print(instance)
-                    fake_object = {}
-                    fake_object['title'] = event['title']
-                    fake_object['location'] = event['location']
-                    fake_object['description'] = event['description']
-                    fake_object['start'] = instance.isoformat()
-                    fake_object['end'] = (event_end-event_start+instance).isoformat()
-                    events.append(json.dumps(fake_object, default=json_util.default))
+                            if instance == indiv:
+                                repeat = True
+
+                    if repeat == False:
+                        fake_object = {}
+                        fake_object['title'] = event['title']
+                        fake_object['location'] = event['location']
+                        fake_object['description'] = event['description']
+                        fake_object['start'] = instance
+                        fake_object['end'] = (event_end-event_start+instance)
+                        fake_object['UID'] = event['UID']
+                        events.append(json.dumps(fake_object, default=json_util.default))
         else:
             events.append(event)
 
@@ -199,6 +229,55 @@ def pseudo_calendarRead():
     #response = jsonify(events)  # TODO: apply this globally
     #response.headers.add('Access-Control-Allow-Origin', '*')
     return events
+
+def pseudo_calendarUpdate():
+    event = {
+        'id': ObjectId('59497c0b93732a1ae3dfe12c'),
+        'title':'Newsch Celebration',
+        'location': 'Library',
+        'description': 'Doing cool newsch things',
+        'start': "2017-06-21T13:00:00Z",
+        'end': "2017-06-21T14:00:00Z",
+        'recurrence-id' : "2017-06-21T15:00:00Z",
+    }
+
+    collection = db[db_setup['events_collection']]
+    calendar = collection.find({})
+
+
+    # Convert ISO strings to python datetimes to be represented as mongoDB Dates
+    # timezones not taken into consideration
+    # TODO: have frontend format dates correctly
+    iso_to_dt = lambda s: datetime.strptime(s, "%Y-%m-%dT%H:%M:%SZ") - timedelta(hours=4)
+    event['start'] = iso_to_dt(event['start'])
+    if 'end' in event and event['end'] is not None:
+        event['end'] = iso_to_dt(event['end'])
+
+    # Add or update collection record, determined by whether it has an ID or not
+    if 'id' in event and event['id'] is not None:
+        
+        current_rec = collection.find({'_id': event['id']})
+
+        if 'recurrence-id' in event:
+            collection.update({ '_id' : event['id']}, {'$push': {'sub_events' : event}})
+        else:
+            record_id = collection.update({'id': event['id']}, event)  # Update record
+        #logging.debug("Updated entry with id {}".format(record_id))
+    else:
+        record_id = collection.insert(event)  # Insert record
+        logging.debug("Added entry with id {}".format(record_id))
+
+        
+
+    # Return the ID of the added (or updated) calendar entry
+    #output = {'id': str(record_id)}
+   
+    # pdb.set_trace()
+    # Output in JSON
+    #response = jsonify(db)
+    responses = db.calendar.find({})
+    #response.headers.add('Access-Control-Allow-Origin', '*')  # Allows running client and server on same computer
+    return [response for response in responses]
 
 print(pseudo_calendarRead())
 
