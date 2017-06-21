@@ -294,22 +294,9 @@ def label_icsFeed(label):
                        headers={"Content-Disposition": cd})
 
 
-@app.route('/cal')
+@app.route('/')
 def splash():
-    url = 'http://localhost:3000/calendarUpdate'
-    event = {
-        "id": "594a763d8d23302708715aba",
-        "title":"Newsch Celebration",
-        "location": "Library",
-        "description": "Doing cool newsch things",
-        "start": "2017-06-21T13:00:00Z",
-        "end": "2017-06-21T14:00:00Z",
-        "recurrence-id" : "2017-06-21T15:00:00Z"
-    }
-    #event = json.dumps(event)
-    #r = requests.post(url, json=event)
-    return r.content
-    #return render_template('splash.html')
+    return render_template('splash.html')
 
 
 @app.route('/calendarRead', methods=['POST'])
