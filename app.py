@@ -4,7 +4,7 @@ import os
 import random
 from flask import Flask, render_template, request, jsonify, make_response, Response
 from bson.objectid import ObjectId
-from bson import json_util
+from bson import json_util, ObjectId
 from datetime import datetime, timedelta
 
 import logging
@@ -17,6 +17,7 @@ from icalendar import Calendar, Event, vCalAddress, vText
 from dateutil.rrule import rrule, MONTHLY, WEEKLY, DAILY, YEARLY, HOURLY, MINUTELY
 import dateutil.parser
 import json
+import isodate
 
 app = Flask(__name__)
 
@@ -51,7 +52,6 @@ db = client[db_setup['name']]
         'start': ISODate("2017-06-19T15:00:00Z"),
         'end': ISODate("2017-06-19T16:00:00Z"),
         'endrecurrence' : ISODate("2017-07-31"),
-        'UID' : '20170619150000-456',
         'recurrence' : {
             'frequency' : 'WEEKLY',
             'interval' : '1',
@@ -66,7 +66,6 @@ db = client[db_setup['name']]
         'start': ISODate("2017-06-21T15:00:00Z"),
         'end': ISODate("2017-06-21T16:00:00Z"),
         'endrecurrence' : ISODate("2017-07-12"),
-        'UID' : '20170619160000-780',
         'recurrence' : {
             'frequency' : 'WEEKLY',
             'interval' : '1',
@@ -135,6 +134,7 @@ def create_calendar(events):
 
 def pseudo_calendarRead():
     date_to_dt = lambda d: datetime.strptime(d, '%Y-%m-%d')
+    iso_to_dt = lambda s: datetime.strptime(s, "%Y-%m-%dT%H:%M:%SZ") - timedelta(hours=4)
 
     start = datetime(2017,6,1)
     end = datetime(2017, 7, 1)
@@ -203,11 +203,6 @@ def pseudo_calendarRead():
                     if 'sub_events' in event:
                         for individual in event['sub_events']:
                             indiv = datetime.strptime(str(individual['recurrence-id']), "%Y-%m-%dT%H:%M:%SZ")
-                            print('-------------')
-                            print(instance)
-                            print(indiv)
-                            print('-------------')
-
                             if instance == indiv:
                                 repeat = True
 
@@ -216,23 +211,23 @@ def pseudo_calendarRead():
                         fake_object['title'] = event['title']
                         fake_object['location'] = event['location']
                         fake_object['description'] = event['description']
-                        fake_object['start'] = instance
-                        fake_object['end'] = (event_end-event_start+instance)
-                        fake_object['UID'] = event['UID']
+                        fake_object['start'] = isodate.parse_datetime(instance.isoformat())
+                        fake_object['end'] = isodate.parse_datetime((event_end-event_start+instance).isoformat())  #.isoformat()
+                        fake_object['id'] = event['id']
                         events.append(json.dumps(fake_object, default=json_util.default))
         else:
             events.append(event)
 
-    # outputStr = json.dumps(events)
+    outputStr = json.dumps(events, default=json_util.default)
     # pdb.set_trace()
     logging.debug("Found {} events for start {} and end {}".format(len(events), start, end))
-    #response = jsonify(events)  # TODO: apply this globally
+    response = jsonify(events)  # TODO: apply this globally
     #response.headers.add('Access-Control-Allow-Origin', '*')
-    return events
+    return response
 
 def pseudo_calendarUpdate():
     event = {
-        'id': ObjectId('59497c0b93732a1ae3dfe12c'),
+        'id': ObjectId('594a763d8d23302708715aba'),
         'title':'Newsch Celebration',
         'location': 'Library',
         'description': 'Doing cool newsch things',
