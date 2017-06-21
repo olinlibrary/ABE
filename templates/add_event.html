@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Add a new label</title>
+  </head>
+  <body>
+    <form action="/events" method="post">
+      <label for="title">title</label><br>
+      <input type="text" name="title" value=""><br>
+      <label for="description">description</label><br>
+      <textarea name="description" rows="8" cols="80"></textarea><br>
+      <label for="start">start</label><br>
+      <input type="datetime-local" name="start" value=""><br>
+      <label for="end">end</label><br>
+      <input type="datetime-local" name="end" value="">
+      <input type="submit"/>
+    </form>
+  </body>
+</html>
