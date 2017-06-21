@@ -319,8 +319,10 @@ def calendarRead():
 
     date_to_dt = lambda d: datetime.strptime(d, '%Y-%m-%d')
 
-    start = date_to_dt(request.data['start'])
-    end = date_to_dt(request.data['end'])
+    #start = date_to_dt(request.data[1])
+    #end = date_to_dt(request.data[2])
+    start = date_to_dt(request.form['start'])
+    end = date_to_dt(request.form['end'])
 
     collection = db[db_setup['events_collection']]
 
@@ -330,21 +332,80 @@ def calendarRead():
     collection.ensure_index([('start', 1)])
 
     # Fetch the event objects from MongoDB
-    recs = collection.find({'start':{'$gte': start, '$lte': end}}) # Can add filter here for customer or calendar ID, etc
+    recs = collection.find({ 
+        '$or': [
+            {'start':{'$gte': start, '$lte': end}}, 
+            { '$and' : [
+                {'endrecurrence': {'$gte': start}}, 
+                {'start' : {'$lte' : end}}
+            ]}
+        ]
+    })
 
     for rec in recs:
         event = rec
-
         # Replace the ID with its string version, since the object is not serializable this way
         event['id'] = str(rec['_id'])
         del(event['_id'])
 
-        events.append(event)
+        event_end = datetime.strptime(str(event['end']), "%Y-%m-%d %H:%M:%S")
+        event_start = datetime.strptime(str(event['start']), "%Y-%m-%d %H:%M:%S")
 
-    # outputStr = json.dumps(events)
+        if 'recurrence' in event:
+            if 'sub_events' in event:
+                for sub_event in event['sub_events']:
+                    if sub_event['start'] <= end and sub_event['end'] >= start:
+                        events.append(sub_event)
+
+
+            recurrence = event['recurrence']
+            if recurrence['frequency'] == 'YEARLY':
+                rFrequency = 0
+            elif recurrence['frequency'] == 'MONTHLY':
+                rFrequency = 1
+            elif recurrence['frequency'] == 'WEEKLY':
+                rFrequency = 2
+            elif recurrence['frequency'] == 'DAILY':
+                rFrequency = 3
+
+            rInterval = recurrence['interval']
+            rCount = recurrence['count'] if 'count' in recurrence else None
+            rUntil = recurrence['until'] if 'until' in recurrence else None
+            rByMonth = recurrence['BYMONTH'] if 'BYMONTH' in recurrence else None
+            rByMonthDay = recurrence['BYMONTHDAY'] if 'BYMONTHDAY' in recurrence else None
+            rByDay = recurrence['BYDAY'] if 'BYDAY' in recurrence else None
+
+            
+            rule_list = list(rrule(freq=rFrequency, count=int(rCount), interval=int(rInterval), until=rUntil, bymonth=rByMonth, \
+                bymonthday=rByMonthDay, byweekday=None, dtstart=event['start']))
+
+            for instance in rule_list:
+                if instance >= start and instance < end:
+                    instance = datetime.strptime(str(instance), "%Y-%m-%d %H:%M:%S")
+                    
+                    repeat = False
+                    if 'sub_events' in event:
+                        for individual in event['sub_events']:
+                            indiv = datetime.strptime(str(individual['recurrence-id']), "%Y-%m-%dT%H:%M:%SZ")
+                            if instance == indiv:
+                                repeat = True
+
+                    if repeat == False:
+                        fake_object = {}
+                        fake_object['title'] = event['title']
+                        fake_object['location'] = event['location']
+                        fake_object['description'] = event['description']
+                        fake_object['start'] = isodate.parse_datetime(instance.isoformat())
+                        fake_object['end'] = isodate.parse_datetime((event_end-event_start+instance).isoformat())  #.isoformat()
+                        fake_object['id'] = event['id']
+                        events.append(json.dumps(fake_object, default=json_util.default))
+        else:
+            events.append(event)
+
+    #outputStr = json.dumps(events)
     # pdb.set_trace()
     logging.debug("Found {} events for start {} and end {}".format(len(events), request.form['start'], request.form['end']))
-    response = jsonify(events)  # TODO: apply this globally
+    response = jsonify(json.loads(json_util.dumps(events)))  # TODO: apply this globally
     response.headers.add('Access-Control-Allow-Origin', '*')
     return response
 
