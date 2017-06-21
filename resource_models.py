@@ -5,10 +5,12 @@ from flask_restful import Resource, Api, reqparse
 from flask_restful.utils import cors
 from flask_cors import CORS, cross_origin
 from pprint import pprint, pformat
+from bson import json_util
 from datetime import datetime
+from dateutil.rrule import rrule, MONTHLY, WEEKLY, DAILY, YEARLY, HOURLY, MINUTELY
 import json
 import os
-
+import isodate
 import logging
 
 import database as db
@@ -26,7 +28,7 @@ class EventApi(Resource):
             end = date_to_dt(request.form['end'])
         else:
             start = datetime(2017,6,1)
-            end = datetime(2017, 7, 1)
+            end = datetime(2017, 7, 20)
         """Retrieve events"""
         if event_id:  # use event id if present
             print('eventid: ' + event_id)
@@ -50,33 +52,32 @@ class EventApi(Resource):
                 abort(404)
 
             
-
+            events = []
             for rec in results:
                 event = rec
                 # Replace the ID with its string version, since the object is not serializable this way
-                event.id = str(rec._id)
-                del(event._id)
+                event['id'] = str(rec['id'])
+                #del(event['id'])
 
-                event_end = datetime.strptime(str(event.end), "%Y-%m-%d %H:%M:%S")
-                event_start = datetime.strptime(str(event.start), "%Y-%m-%d %H:%M:%S")
+                
 
                 # checks for recurrent events
                 if 'recurrence' in event:
                     # checks for events from a recurrence that's been edited
                     if 'sub_events' in event:
-                        for sub_event in event.sub_events:
-                            if sub_event.start <= end and sub_event.start >= start:
+                        for sub_event in event['sub_events']:
+                            if sub_event['start'] <= end and sub_event['start'] >= start:
                                 events.append(sub_event)
 
 
                     recurrence = event.recurrence
-                    if recurrence.frequency == 'YEARLY':
+                    if recurrence['frequency'] == 'YEARLY':
                         rFrequency = 0
-                    elif recurrence.frequency == 'MONTHLY':
+                    elif recurrence['frequency'] == 'MONTHLY':
                         rFrequency = 1
-                    elif recurrence.frequency == 'WEEKLY':
+                    elif recurrence['frequency'] == 'WEEKLY':
                         rFrequency = 2
-                    elif recurrence.frequency == 'DAILY':
+                    elif recurrence['frequency'] == 'DAILY':
                         rFrequency = 3
 
                     rInterval = recurrence['interval']
@@ -89,6 +90,9 @@ class EventApi(Resource):
                     
                     rule_list = list(rrule(freq=rFrequency, count=int(rCount), interval=int(rInterval), until=rUntil, bymonth=rByMonth, \
                         bymonthday=rByMonthDay, byweekday=None, dtstart=event['start']))
+
+                    event_end = datetime.strptime(str(event['end']), "%Y-%m-%d %H:%M:%S")
+                    event_start = datetime.strptime(str(event['start']), "%Y-%m-%d %H:%M:%S")
 
                     for instance in rule_list:
                         if instance >= start and instance < end:
@@ -109,11 +113,12 @@ class EventApi(Resource):
                                 fake_object['start'] = isodate.parse_datetime(instance.isoformat())
                                 fake_object['end'] = isodate.parse_datetime((event_end-event_start+instance).isoformat())  #.isoformat()
                                 fake_object['id'] = event['id']
-                                events.append(json.dumps(fake_object, default=json_util.default))
+                                events.append(fake_object) #json.dumps(fake_object, default=json_util.default))
                 else:
-                    events.append(event)
+                    events.append(dict(event.to_mongo()))
 
-            return jsonify(result=[json.loads(result.to_json()) for result in events])
+            # TODO: fix dict to json conversion (ObjectIDs)
+            return json_util.dumps(events) #result=[json.loads(result.to_json()) for result in events])
 
     @cors.crossdomain(origin='*')
     def post(self):
