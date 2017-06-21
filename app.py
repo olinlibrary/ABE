@@ -3,8 +3,9 @@ from pymongo import MongoClient
 import os
 import random
 from flask import Flask, render_template, request, jsonify, make_response, Response
+import requests
 from bson.objectid import ObjectId
-from bson import json_util, ObjectId
+from bson import json_util
 from datetime import datetime, timedelta
 
 import logging
@@ -195,7 +196,6 @@ def pseudo_calendarRead():
                 bymonthday=rByMonthDay, byweekday=None, dtstart=event['start']))
 
             for instance in rule_list:
-                print(instance)
                 if instance >= start and instance < end:
                     instance = datetime.strptime(str(instance), "%Y-%m-%d %H:%M:%S")
                     
@@ -218,12 +218,12 @@ def pseudo_calendarRead():
         else:
             events.append(event)
 
-    outputStr = json.dumps(events, default=json_util.default)
+    outputStr = json.dumps(events)
     # pdb.set_trace()
     logging.debug("Found {} events for start {} and end {}".format(len(events), start, end))
-    response = jsonify(events)  # TODO: apply this globally
+    #response = jsonify(events)  # TODO: apply this globally
     #response.headers.add('Access-Control-Allow-Origin', '*')
-    return response
+    return events
 
 def pseudo_calendarUpdate():
     event = {
@@ -237,8 +237,6 @@ def pseudo_calendarUpdate():
     }
 
     collection = db[db_setup['events_collection']]
-    calendar = collection.find({})
-
 
     # Convert ISO strings to python datetimes to be represented as mongoDB Dates
     # timezones not taken into consideration
@@ -250,8 +248,6 @@ def pseudo_calendarUpdate():
 
     # Add or update collection record, determined by whether it has an ID or not
     if 'id' in event and event['id'] is not None:
-        
-        current_rec = collection.find({'_id': event['id']})
 
         if 'recurrence-id' in event:
             collection.update({ '_id' : event['id']}, {'$push': {'sub_events' : event}})
@@ -274,7 +270,7 @@ def pseudo_calendarUpdate():
     #response.headers.add('Access-Control-Allow-Origin', '*')  # Allows running client and server on same computer
     return [response for response in responses]
 
-print(pseudo_calendarRead())
+#print(pseudo_calendarRead())
 
 @app.route('/icsFeed/<username>')
 def icsFeed(username):
@@ -298,9 +294,22 @@ def label_icsFeed(label):
                        headers={"Content-Disposition": cd})
 
 
-@app.route('/')
+@app.route('/cal')
 def splash():
-    return render_template('splash.html')
+    url = 'http://localhost:3000/calendarUpdate'
+    event = {
+        "id": "594a763d8d23302708715aba",
+        "title":"Newsch Celebration",
+        "location": "Library",
+        "description": "Doing cool newsch things",
+        "start": "2017-06-21T13:00:00Z",
+        "end": "2017-06-21T14:00:00Z",
+        "recurrence-id" : "2017-06-21T15:00:00Z"
+    }
+    #event = json.dumps(event)
+    #r = requests.post(url, json=event)
+    return r.content
+    #return render_template('splash.html')
 
 
 @app.route('/calendarRead', methods=['POST'])
@@ -310,8 +319,8 @@ def calendarRead():
 
     date_to_dt = lambda d: datetime.strptime(d, '%Y-%m-%d')
 
-    start = date_to_dt(request.form['start'])
-    end = date_to_dt(request.form['end'])
+    start = date_to_dt(request.data['start'])
+    end = date_to_dt(request.data['end'])
 
     collection = db[db_setup['events_collection']]
 
@@ -342,6 +351,7 @@ def calendarRead():
 
 @app.route('/calendarUpdate', methods=['POST'])
 def calendarUpdate():
+    
     event = request.get_json(force=True)
     logging.debug("Received event from client: {}".format(event))
 
@@ -357,27 +367,31 @@ def calendarUpdate():
     # Convert ISO strings to python datetimes to be represented as mongoDB Dates
     # timezones not taken into consideration
     # TODO: have frontend format dates correctly
-    iso_to_dt = lambda s: datetime.strptime(s, "%Y-%m-%dT%H:%M:%S.%fZ") - timedelta(hours=4)
+    iso_to_dt = lambda s: datetime.strptime(s, "%Y-%m-%dT%H:%M:%SZ") - timedelta(hours=4)
     event['start'] = iso_to_dt(event['start'])
     if 'end' in event and event['end'] is not None:
         event['end'] = iso_to_dt(event['end'])
 
     # Add or update collection record, determined by whether it has an ID or not
     if 'id' in event and event['id'] is not None:
-        event_id = event['id']
-        record_id = collection.update({'_id': event_id}, event)  # Update record
-        logging.debug("Updated entry with id {}".format(record_id))
+        if 'recurrence-id' in event:
+            record_id = collection.update({ '_id' : event['id']}, {'$push': {'sub_events' : event}})
+            logging.debug("Updated reccurence with event with id {}".format(record_id))
+        else:
+            record_id = collection.update({'id': event['id']}, event)  # Update record
+            logging.debug("Updated entry with id {}".format(record_id))
     else:
         record_id = collection.insert(event)  # Insert record
         logging.debug("Added entry with id {}".format(record_id))
 
     # Return the ID of the added (or updated) calendar entry
     output = {'id': str(record_id)}
-    print('neat')
+    
     # pdb.set_trace()
     # Output in JSON
     response = jsonify(output)
     response.headers.add('Access-Control-Allow-Origin', '*')  # Allows running client and server on same computer
+    #print(output)
     return response
 
 
