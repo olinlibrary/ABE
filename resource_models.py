@@ -5,8 +5,8 @@ from flask_restful import Resource, Api, reqparse
 from flask_restful.utils import cors
 from flask_cors import CORS, cross_origin
 from pprint import pprint, pformat
-from bson import json_util
-from datetime import datetime
+from bson import json_util, objectid
+from datetime import datetime, timedelta
 from dateutil.rrule import rrule, MONTHLY, WEEKLY, DAILY, YEARLY, HOURLY, MINUTELY
 import json
 import os
@@ -58,9 +58,6 @@ class EventApi(Resource):
                 # Replace the ID with its string version, since the object is not serializable this way
                 event['id'] = str(rec['id'])
                 #del(event['id'])
-
-                
-
                 # checks for recurrent events
                 if 'recurrence' in event:
                     # checks for events from a recurrence that's been edited
@@ -123,12 +120,45 @@ class EventApi(Resource):
     @cors.crossdomain(origin='*')
     def post(self):
         """Create new event with parameters passed in through args or form"""
-        print('***REQUEST DATA***\n' + request.data)
-        received_data = dict(request.data)  # combines args and form
+        print('***REQUEST DATA***\n' + str(request.values.to_dict()))
+        event = request.values.to_dict()  # combines args and form
         try:
-            new_event = db.Event(**received_data)
-            new_event.save()
+            iso_to_dt = lambda s: datetime.strptime(s, "%Y-%m-%dT%H:%M:%SZ") - timedelta(hours=4)
+            
+            event['start'] = iso_to_dt(event['start'])
+            
+            if 'end' in event and event['end'] is not None:
+                event['end'] = iso_to_dt(event['end'])
+
+            if 'rec_id' in event and event['rec_id'] is not None:
+                event['rec_id'] = iso_to_dt(event['rec_id'])
+            
+            if 'sid' in event and event['sid'] is not None:
+                if 'rec_id' in event:
+                    rec_event = db.RecurringEventExc(**event)
+                          
+                    record_id = db.Event.objects(__raw__={'_id': objectid.ObjectId(event['sid'])})
+            
+                    cur_sub_event = db.Event.objects(__raw__ = { '$and' : [
+                        {'_id': objectid.ObjectId(event['sid'])}, 
+                        {'sub_events.rec_id' : event['rec_id']}]})
+
+                    if cur_sub_event:
+                        cur_sub_event.update(set__sub_events__S=rec_event)
+                    else:
+                        record_id.update(add_to_set__sub_events=rec_event)
+                    
+                    logging.debug("Updated reccurence with event with id {}".format(record_id))
+                else:
+                    #record_id = db.Event.objects(id=event['id']).update(inc__id__S=event)  # Update record
+                    logging.debug("Updated entry with id {}".format(record_id))
+            else:
+
+                record_id = db.Event(**event).save()  # Insert record
+                logging.debug("Added entry with id {}".format(record_id))
+
         except Exception as error:
+            print(error)
             abort(400)
 
         return "", 201

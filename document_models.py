@@ -15,9 +15,16 @@ class RecurringEventDefinition(EmbeddedDocument):
     by_month = StringField()
 
 
-class RecurringEventException(EmbeddedDocument):  # TODO: get a better name
+class RecurringEventExc(EmbeddedDocument):  # TODO: get a better name
     """Model for Exceptions to recurring events"""
-    pass
+    sid = StringField()
+    title = StringField()
+    location = StringField()
+    description = StringField()
+    start = DateTimeField()
+    end = DateTimeField()
+    rec_id = DateTimeField()
+
 
 class Event(Document):
     """Standard model for events"""  # TODO: improve description
@@ -36,7 +43,7 @@ class Event(Document):
     labels = ListField(StringField())  # TODO: max length of label names?
 
     recurrence = EmbeddedDocumentField(RecurringEventDefinition)
-    sub_events = ListField(EmbeddedDocumentField(RecurringEventException))
+    sub_events = ListField(EmbeddedDocumentField(RecurringEventExc, default=RecurringEventExc))
 
     meta = {'allow_inheritance': True}  # TODO: set indexes
 

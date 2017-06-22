@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Connect to mongodb"""
 from mongoengine import *
-from document_models import Event, Label
+from document_models import Event, Label, RecurringEventExc
 import os
 import logging
 
