@@ -62,6 +62,7 @@ sample_events = [
         'by_day' : "WE"
         }
     }
+
 ]
 
 sample_labels = [

@@ -5,18 +5,25 @@ from document_models import Event, Label, RecurringEventExc
 import os
 import logging
 
+config_present = os.path.isfile("mongo_config.py")
+env_present = os.environ.get('MONGO_URI')
+if config_present:
+    from mongo_config import uri, use_local, db_name
+else:
+    use_local = False
+    uri = None
+    db_name = None
+mongo_uri = os.getenv('MONGO_URI', uri) if not use_local else None
+mongo_db_name = os.getenv('DB_NAME', db_name)
 
-if os.getenv('MONGO_URI', False):  # try env variable first
-    connect(os.environ.get('MONGO_URI'))
-    logging.info("Using environment variable for MongoDB URI")
-elif os.path.isfile("mongo_config.py"):  # then check for config file
-    import mongo_config
-    if mongo_config.use_local:
-        connect(mongo_config.db)
-        logging.info('Using database {} on localhost'.format(mongo_config.db))
-    else:
-        connect(mongo_config.mongo_uri)
-        logging.info("Using URI from mongo_config.py")
-else:  # use localhost otherwise
-    connect()
-    logging.info("Using localhost with no database selected")
+connect(mongo_db_name, host=mongo_uri)
+
+if env_present:
+    location = 'uri from environment variable'
+elif config_present and not use_local:
+    location = 'uri from config file'
+else:
+    location = 'localhost'
+
+logging.info('Using db "{}" with {}'.format(mongo_db_name, location))
+

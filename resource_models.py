@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Resource models for flask"""
+<<<<<<< HEAD
 from flask import Flask, jsonify, render_template, request, abort
 from flask_restful import Resource, Api, reqparse
 from flask_restful.utils import cors
@@ -8,9 +9,13 @@ from pprint import pprint, pformat
 from bson import json_util, objectid
 from datetime import datetime, timedelta
 from dateutil.rrule import rrule, MONTHLY, WEEKLY, DAILY, YEARLY, HOURLY, MINUTELY
+from helpers import mongo_to_dict, request_to_dict
 import json
 import os
 import isodate
+import pdb
+from mongoengine import ValidationError
+
 import logging
 
 import database as db
@@ -19,7 +24,6 @@ import database as db
 class EventApi(Resource):
     """API for interacting with events"""
 
-    @cors.crossdomain(origin='*')
     def get(self, event_id=None):
         date_to_dt = lambda d: datetime.strptime(d, '%Y-%m-%d')
         
@@ -29,6 +33,7 @@ class EventApi(Resource):
         else:
             start = datetime(2017,6,1)
             end = datetime(2017, 7, 20)
+
         """Retrieve events"""
         if event_id:  # use event id if present
             print('eventid: ' + event_id)
@@ -36,7 +41,7 @@ class EventApi(Resource):
             if not result:
                 abort(404)
 
-            return jsonify(json.loads(result.to_json()))
+            return jsonify(mongo_to_dict(result))
         else:  # search database based on parameters
             # TODO: search based on parameters
             results = db.Event.objects(__raw__={ 
@@ -117,11 +122,10 @@ class EventApi(Resource):
             # TODO: fix dict to json conversion (ObjectIDs)
             return json_util.dumps(events) #result=[json.loads(result.to_json()) for result in events])
 
-    @cors.crossdomain(origin='*')
     def post(self):
         """Create new event with parameters passed in through args or form"""
-        print('***REQUEST DATA***\n' + str(request.values.to_dict()))
-        event = request.values.to_dict()  # combines args and form
+        event = request_to_dict(request)
+        logging.debug("Received POST data: {}".format(event))  # combines args and form
         try:
             iso_to_dt = lambda s: datetime.strptime(s, "%Y-%m-%dT%H:%M:%SZ") - timedelta(hours=4)
             
@@ -157,23 +161,22 @@ class EventApi(Resource):
                 record_id = db.Event(**event).save()  # Insert record
                 logging.debug("Added entry with id {}".format(record_id))
 
-        except Exception as error:
-            print(error)
-            abort(400)
+        except ValidationError as error:
+            logging.warning("POST request rejected: {}".format(str(error)))
+            return error, 400
 
-        return "", 201
+        else:  # return success
+            return str(new_event.id), 201
 
-    @cors.crossdomain(origin='*')
     def put(self, event_id):
         """Replace individual event"""
         pass
 
-    @cors.crossdomain(origin='*')
     def patch(self, event_id):
         """Modify individual event"""
         pass
 
-    @cors.crossdomain(origin='*')
+
     def delete(self, event_id):
         """Delete individual event"""
         pass
@@ -182,7 +185,7 @@ class EventApi(Resource):
 class LabelApi(Resource):
     """API for interacting with all labels (searching, creating)"""
 
-    @cors.crossdomain(origin='*')
+
     def get(self, label_name=None):
         """Retrieve labels"""
         if label_name:  # use event id if present
@@ -190,39 +193,39 @@ class LabelApi(Resource):
             if not result:
                 abort(404)
             else:
-                return jsonify(json.loads(result.to_json()))
+
+                return jsonify(mongo_to_dict(result))
         else:  # search database based on parameters
             # TODO: search based on terms
             results = db.Label.objects()
             if not results:
                 abort(404)
             else:
-                return jsonify([json.loads(result.to_json()) for result in results])
+                return jsonify([mongo_to_dict(result) for result in results])
 
-    @cors.crossdomain(origin='*')
     def post(self):
         """Create new label with parameters passed in through args or form"""
-        print('***REQUEST DATA***\n' + request.data)
-        received_data = dict(request.data)  # combines args and form
+        received_data = request_to_dict(request)
+        logging.debug("Received POST data: {}".format(received_data))
         try:
-            new_label = db.Label(**received_data)
-            new_label.save()
+            new_event = db.Label(**received_data)
+            # pdb.set_trace()
+            new_event.save()
         except ValidationError as error:
-            abort(400)
+            logging.warning("POST request rejected: {}".format(str(error)))
+            return error, 400
+        else:  # return success
+            return str(new_event.id), 201
 
-        return 201
 
-    @cors.crossdomain(origin='*')
     def put(self, label_name):
         """Replace individual event"""
         pass
 
-    @cors.crossdomain(origin='*')
     def patch(self, label_name):
         """Modify individual event"""
         pass
 
-    @cors.crossdomain(origin='*')
     def delete(self, label_name):
         """Delete individual event"""
         pass

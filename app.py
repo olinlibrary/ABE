@@ -1,6 +1,10 @@
-#!/usr/bin/env python
-from pymongo import MongoClient
+#!/usr/bin/env python3
+"""Main flask app"""
+from flask import Flask, render_template
+from flask_restful import Api
+from flask_cors import CORS
 import os
+<<<<<<< HEAD
 import random
 from flask import Flask, render_template, request, jsonify, make_response, Response
 import requests
@@ -8,12 +12,14 @@ from bson.objectid import ObjectId
 from bson import json_util
 from datetime import datetime, timedelta
 from pprint import pprint, pformat
+=======
+>>>>>>> dev
 
 import logging
 FORMAT = "%(levelname)s:ABE: _||_ %(message)s"
 logging.basicConfig(level=logging.DEBUG, format=FORMAT)
 
-import pdb
+from resource_models import EventApi, LabelApi
 
 from icalendar import Calendar, Event, vCalAddress, vText
 from dateutil.rrule import rrule, MONTHLY, WEEKLY, DAILY, YEARLY, HOURLY, MINUTELY
@@ -22,7 +28,10 @@ import json
 import isodate
 
 app = Flask(__name__)
+CORS(app)
+api = Api(app)
 
+<<<<<<< HEAD
 # connect to MongoDB
 if os.getenv('MONGO_URI', False):  # try env variable first
     client = MongoClient(os.environ.get('MONGO_URI'))
@@ -298,6 +307,13 @@ def label_icsFeed(label):
 =======
 logging.info("Using database {}".format(db_setup['name']))
 >>>>>>> origin/evan/restructuring
+=======
+# Route resources
+api.add_resource(EventApi, '/events/', methods=['GET', 'POST'], endpoint='event')
+api.add_resource(EventApi, '/events/<string:event_id>', methods=['GET', 'PUT', 'PATCH', 'DELETE'], endpoint='event_id')  # TODO: add route for string/gphycat links
+api.add_resource(LabelApi, '/labels/', methods=['GET', 'POST'], endpoint='label')
+api.add_resource(LabelApi, '/labels/<string:label_name>', methods=['GET', 'PUT', 'PATCH', 'DELETE'], endpoint='label_name')
+>>>>>>> dev
 
 
 @app.route('/')
@@ -305,6 +321,7 @@ def splash():
     return render_template('splash.html')
 
 
+<<<<<<< HEAD
 @app.route('/calendarRead', methods=['POST'])
 def calendarRead():
     # pdb.set_trace()
@@ -448,18 +465,16 @@ def calendarUpdate():
     #print(output)
     return response
 
+=======
+@app.route('/add_event')
+def add_event():
+    return render_template('add_event.html')
+>>>>>>> dev
 
-@app.route('/calendarDelete', methods=['POST'])
-def calendarDelete():
-    custom_attribute = request.form['custom_attribute']
-    collection = db[db_setup['events_collection']]
 
-    # Delete the collection record using the ID
-    record_id = request.forms['id']
-    if(record_id is not None and record_id != ''):
-        event_id = ObjectId(record_id)
-        collection.remove({'_id': event_id}) # Delete record
-        logging.debug("Deleted entry {}".format(output["id"]))
+@app.route('/add_label')
+def add_label():
+    return render_template('add_label.html')
 
 event = {
     "title" : "Friday Funday",
@@ -498,7 +513,7 @@ def add_label_page():
 
 
 if __name__ == '__main__':
-   app.debug = True  # updates the page as the code is saved
-   HOST = '0.0.0.0' if 'PORT' in os.environ else '127.0.0.1'
-   PORT = int(os.environ.get('PORT', 3000))
-   app.run(host='0.0.0.0', port=PORT)
+    app.debug = os.getenv('FLASK_DEBUG', True) # updates the page as the code is saved
+    HOST = '0.0.0.0' if 'PORT' in os.environ else '127.0.0.1'
+    PORT = int(os.environ.get('PORT', 3000))
+    app.run(host='0.0.0.0', port=PORT)
