@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Resource models for flask"""
-from flask import jsonify, request, abort
+from flask import jsonify, request, abort, make_response
 from flask_restful import Resource
 from mongoengine import ValidationError
 
@@ -48,7 +48,7 @@ class EventApi(Resource):
             logging.warning("POST request rejected: {}".format(str(error)))
             return error, 400
         else:  # return success
-            return jsonify({'id': str(new_event.id)}), 201
+            return make_response(jsonify({'id': str(new_event.id)}), 201)
 
     def put(self, event_id):
         """Replace individual event"""
