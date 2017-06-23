@@ -21,7 +21,7 @@ def request_to_dict(request):
     """Convert incoming flask requests for objects into a dict"""
 
     json = request.get_json(force=True)
-    req_dict = json.to_dict(flat=True) if json else request.values.to_dict(flat=True)
+    req_dict = json if json else request.values.to_dict(flat=True)
     obj_dict = {k: v for k, v in req_dict.items() if v != ""}
 
     return obj_dict
