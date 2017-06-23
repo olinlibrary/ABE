@@ -46,7 +46,11 @@ class EventApi(Resource):
             new_event.save()
         except ValidationError as error:
             logging.warning("POST request rejected: {}".format(str(error)))
-            return error, 400
+            return make_response(jsonify({
+                'error_type': 'validation',
+                'validation_errors': [str(err) for err in error.errors],
+                'error_message': error.message}),
+                400)
         else:  # return success
             return make_response(jsonify({'id': str(new_event.id)}), 201)
 
