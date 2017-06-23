@@ -48,7 +48,7 @@ class EventApi(Resource):
             logging.warning("POST request rejected: {}".format(str(error)))
             return error, 400
         else:  # return success
-            return new_event.id, 201
+            return jsonify({'id': new_event.id}), 201
 
     def put(self, event_id):
         """Replace individual event"""
@@ -94,7 +94,7 @@ class LabelApi(Resource):
             logging.warning("POST request rejected: {}".format(str(error)))
             return error, 400
         else:  # return success
-            return new_event.id, 201
+            return jsonify({'id': new_event.id}), 201
 
     def put(self, label_name):
         """Replace individual event"""
