@@ -8,15 +8,14 @@ from pprint import pprint, pformat
 from bson import json_util, objectid
 from datetime import datetime, timedelta
 from dateutil.rrule import rrule, MONTHLY, WEEKLY, DAILY, YEARLY, HOURLY, MINUTELY
-from helpers import mongo_to_dict, request_to_dict, create_ics
+from helpers import mongo_to_dict, request_to_dict, mongo_to_ics, event_query, get_to_event_search
 import json
 import os
 import isodate
 import pdb
 from mongoengine import ValidationError
-
-from helpers import mongo_to_dict, request_to_dict, event_query, get_to_event_search
-
+import requests
+from icalendar import Calendar
 import logging
 
 import database as db
@@ -230,8 +229,9 @@ class ICSFeed(Resource):
     def get(self, ics_name=None):
         if ics_name:
             # configure ics specs from fullcalendar to be mongoengine searchable
-            #PLACEHOLDER: results = filter_events()
-            response = create_ics(db.Event.objects())
+            query = event_query(get_to_event_search(request))
+            results = db.Event.objects(**query)
+            response = mongo_to_ics(results)
             cd = "attachment;filename="+ics_name+".ics"
             return Response(response,
                        mimetype="text/calendar",
@@ -240,12 +240,17 @@ class ICSFeed(Resource):
 
 
     def post(self):
-        url = str(request)
-        req = urllib2.Request(url)
-        response = urllib2.urlopen(req)
-        data = response.read()
-
+        #reads outside ics feed
+        url = request_to_dict(request)
+        data = requests.get(url['url'].strip()).content.decode('utf-8')
         cal = Calendar.from_ical(data)
+        
+        for component in cal.walk():
+            if component.name == "VEVENT":
+                print(component.get('summary'))
+                print(component.get('dtstart'))
+                print(component.get('dtend'))
+                print(component.get('dtstamp'))
 
     def put(self, ics_name):
         pass

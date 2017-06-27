@@ -70,7 +70,7 @@ def create_ics_recurrence(new_event, recurrence):
     new_event.add('RRULE', rec_ics_string)
     return(new_event)
 
-def create_ics(events):
+def mongo_to_ics(events):
     #initialize calendar object
     cal = Calendar()
     for event in events:
@@ -93,6 +93,19 @@ def create_ics(events):
 
     response = cal.to_ical()
     return response
+
+def ics_to_mongo(component):
+    event_def = {}
+    '''
+    event_def['title']
+    event_def['description']
+    event_def['url']
+    event_def['email']
+    event_def['start']
+    event_def['end']
+    event_def['end_recurrence']
+    event_def['']
+    '''
 
 
 def get_to_event_search(request):
