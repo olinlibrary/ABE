@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Main flask app"""
-from flask import Flask
+from flask import Flask, render_template
 from flask_restful import Api
 import os
 
@@ -11,6 +11,7 @@ logging.basicConfig(level=logging.DEBUG, format=FORMAT)
 from resource_models import EventApi, LabelApi, ICSFeed
 
 app = Flask(__name__)
+CORS(app)
 api = Api(app)
 
 # Route resources
@@ -20,6 +21,18 @@ api.add_resource(LabelApi, '/labels/', methods=['GET', 'POST'], endpoint='label'
 api.add_resource(LabelApi, '/labels/<string:label_name>', methods=['GET', 'PUT', 'PATCH', 'DELETE'], endpoint='label_name')
 api.add_resource(ICSFeed, '/ics/', methods=['GET', 'POST'], endpoint='ics')
 api.add_resource(ICSFeed, '/ics/<string:ics_name>', methods=['GET', 'PUT', 'PATCH', 'DELETE'], endpoint='ics_name')
+
+@app.route('/')
+def splash():
+	return render_template('splash.html')
+
+@app.route('/add_event')
+def add_event():
+	return render_template('add_event.html')
+
+@app.route('/add_label')
+def add_label():
+	return render_template('add_label.html')
 
 if __name__ == '__main__':
     app.debug = os.getenv('FLASK_DEBUG', True) # updates the page as the code is saved
