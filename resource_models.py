@@ -15,6 +15,8 @@ import isodate
 import pdb
 from mongoengine import ValidationError
 
+from helpers import mongo_to_dict, request_to_dict, event_query, get_to_event_search
+
 import logging
 
 import database as db
@@ -42,16 +44,9 @@ class EventApi(Resource):
 
             return jsonify(mongo_to_dict(result))
         else:  # search database based on parameters
-            # TODO: search based on parameters
-            results = db.Event.objects(__raw__={ 
-                '$or': [
-                    {'start':{'$gte': start, '$lte': end}}, 
-                    { '$and' : [
-                        {'endrecurrence': {'$gte': start}}, 
-                        {'start' : {'$lte' : end}}
-                    ]}
-                ]
-            })
+            query = event_query(get_to_event_search(request))
+            results = db.Event.objects(**query)
+            logging.debug('found {} events for query'.format(len(results)))
             if not results:
                 abort(404)
 
