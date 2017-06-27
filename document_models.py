@@ -43,7 +43,7 @@ class Event(Document):
     labels = ListField(StringField())  # TODO: max length of label names?
 
     recurrence = EmbeddedDocumentField(RecurringEventDefinition)
-    sub_events = ListField(EmbeddedDocumentField(RecurringEventExc, default=RecurringEventExc))
+    sub_events = ListField(EmbeddedDocumentField(RecurringEventExc))
 
     meta = {'allow_inheritance': True}  # TODO: set indexes
 

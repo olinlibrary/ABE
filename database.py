@@ -8,7 +8,7 @@ import logging
 config_present = os.path.isfile("mongo_config.py")
 env_present = os.environ.get('MONGO_URI')
 if config_present:
-    from mongo_config import uri, use_local, db_name
+    from mongo_config import mongo_uri, use_local, db_name
 else:
     use_local = False
     uri = None

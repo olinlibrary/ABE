@@ -44,8 +44,17 @@ sample_events = [
         'interval' : '1',
         'count' : '7',
         'by_day' : "MO"
-        }
+        },
+    'sub_events' : [
+       {'title':'Not a club',
+        'location': 'Quiet Reading Room',
+        'description': 'reading cool books',
+        'start': datetime(2017, 7, 3, 16), 
+        'end': datetime(2017, 7, 3, 18),
+        'rec_id': datetime(2017,7,3,15)},
+    ]
     },
+
     {
     "visibility": "olin",
     'title':'Newsch Celebration',

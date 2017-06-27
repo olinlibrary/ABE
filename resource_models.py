@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Resource models for flask"""
-<<<<<<< HEAD
-from flask import Flask, jsonify, render_template, request, abort
+from flask import Flask, jsonify, render_template, request, abort, Response
 from flask_restful import Resource, Api, reqparse
 from flask_restful.utils import cors
 from flask_cors import CORS, cross_origin
@@ -9,7 +8,7 @@ from pprint import pprint, pformat
 from bson import json_util, objectid
 from datetime import datetime, timedelta
 from dateutil.rrule import rrule, MONTHLY, WEEKLY, DAILY, YEARLY, HOURLY, MINUTELY
-from helpers import mongo_to_dict, request_to_dict
+from helpers import mongo_to_dict, request_to_dict, create_ics
 import json
 import os
 import isodate
@@ -229,3 +228,37 @@ class LabelApi(Resource):
     def delete(self, label_name):
         """Delete individual event"""
         pass
+
+
+class ICSFeed(Resource):
+
+    def get(self, ics_name=None):
+        if ics_name:
+            # configure ics specs from fullcalendar to be mongoengine searchable
+            #PLACEHOLDER: results = filter_events()
+            response = create_ics(db.Event.objects())
+            cd = "attachment;filename="+ics_name+".ics"
+            return Response(response,
+                       mimetype="text/calendar",
+                       headers={"Content-Disposition": cd})
+
+
+
+    def post(self):
+        url = str(request)
+        req = urllib2.Request(url)
+        response = urllib2.urlopen(req)
+        data = response.read()
+
+        cal = Calendar.from_ical(data)
+
+    def put(self, ics_name):
+        pass
+
+    def patch(self, ics_name):
+        pass
+
+    def delete(self, ics_name):
+        pass
+
+    
