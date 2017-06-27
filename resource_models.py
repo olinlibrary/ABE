@@ -1,21 +1,19 @@
 #!/usr/bin/env python3
 """Resource models for flask"""
-from flask import Flask, jsonify, render_template, request, abort, Response
-from flask_restful import Resource, Api, reqparse
-from flask_restful.utils import cors
-from flask_cors import CORS, cross_origin
+from flask import jsonify, request, abort, Response
+from flask_restful import Resource
+from mongoengine import ValidationError
 from pprint import pprint, pformat
 from bson import json_util, objectid
 from datetime import datetime, timedelta
-from dateutil.rrule import rrule, MONTHLY, WEEKLY, DAILY, YEARLY, HOURLY, MINUTELY
+from dateutil.rrule import rrule, MONTHLY, WEEKLY, DAILY, YEARLY
 from helpers import mongo_to_dict, request_to_dict, mongo_to_ics, event_query, get_to_event_search
-import json
-import os
 import isodate
-import pdb
-from mongoengine import ValidationError
-import requests
 from icalendar import Calendar
+
+import pdb
+import requests
+
 import logging
 
 import database as db
@@ -26,7 +24,7 @@ class EventApi(Resource):
 
     def get(self, event_id=None):
         date_to_dt = lambda d: datetime.strptime(d, '%Y-%m-%d')
-        
+
         if request.form:
             start = date_to_dt(request.form['start'])
             end = date_to_dt(request.form['end'])
@@ -49,7 +47,7 @@ class EventApi(Resource):
             if not results:
                 abort(404)
 
-            
+
             events = []
             for rec in results:
                 event = rec
@@ -82,7 +80,7 @@ class EventApi(Resource):
                     rByMonthDay = recurrence['BYMONTHDAY'] if 'BYMONTHDAY' in recurrence else None
                     rByDay = recurrence['BYDAY'] if 'BYDAY' in recurrence else None
 
-                    
+
                     rule_list = list(rrule(freq=rFrequency, count=int(rCount), interval=int(rInterval), until=rUntil, bymonth=rByMonth, \
                         bymonthday=rByMonthDay, byweekday=None, dtstart=event['start']))
 
@@ -92,7 +90,7 @@ class EventApi(Resource):
                     for instance in rule_list:
                         if instance >= start and instance < end:
                             instance = datetime.strptime(str(instance), "%Y-%m-%d %H:%M:%S")
-                            
+
                             repeat = False
                             if 'sub_events' in event:
                                 for individual in event['sub_events']:
@@ -121,30 +119,30 @@ class EventApi(Resource):
         logging.debug("Received POST data: {}".format(event))  # combines args and form
         try:
             iso_to_dt = lambda s: datetime.strptime(s, "%Y-%m-%dT%H:%M:%SZ") - timedelta(hours=4)
-            
+
             event['start'] = iso_to_dt(event['start'])
-            
+
             if 'end' in event and event['end'] is not None:
                 event['end'] = iso_to_dt(event['end'])
 
             if 'rec_id' in event and event['rec_id'] is not None:
                 event['rec_id'] = iso_to_dt(event['rec_id'])
-            
+
             if 'sid' in event and event['sid'] is not None:
                 if 'rec_id' in event:
                     rec_event = db.RecurringEventExc(**event)
-                          
+
                     record_id = db.Event.objects(__raw__={'_id': objectid.ObjectId(event['sid'])})
-            
+
                     cur_sub_event = db.Event.objects(__raw__ = { '$and' : [
-                        {'_id': objectid.ObjectId(event['sid'])}, 
+                        {'_id': objectid.ObjectId(event['sid'])},
                         {'sub_events.rec_id' : event['rec_id']}]})
 
                     if cur_sub_event:
                         cur_sub_event.update(set__sub_events__S=rec_event)
                     else:
                         record_id.update(add_to_set__sub_events=rec_event)
-                    
+
                     logging.debug("Updated reccurence with event with id {}".format(record_id))
                 else:
                     #record_id = db.Event.objects(id=event['id']).update(inc__id__S=event)  # Update record
@@ -244,7 +242,7 @@ class ICSFeed(Resource):
         url = request_to_dict(request)
         data = requests.get(url['url'].strip()).content.decode('utf-8')
         cal = Calendar.from_ical(data)
-        
+
         for component in cal.walk():
             if component.name == "VEVENT":
                 print(component.get('summary'))
@@ -260,5 +258,3 @@ class ICSFeed(Resource):
 
     def delete(self, ics_name):
         pass
-
-    
