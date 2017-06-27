@@ -28,17 +28,17 @@ api.add_resource(ICSFeed, '/ics/<string:ics_name>', methods=['GET', 'PUT', 'PATC
 
 @app.route('/')
 def splash():
-	return render_template('splash.html')
+    return render_template('splash.html')
 
 
 @app.route('/add_event')
 def add_event():
-	return render_template('add_event.html')
+    return render_template('add_event.html')
 
 
 @app.route('/add_label')
 def add_label():
-	return render_template('add_label.html')
+    return render_template('add_label.html')
 
 
 if __name__ == '__main__':
