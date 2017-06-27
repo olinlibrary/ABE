@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Resource models for flask"""
-from flask import jsonify, request, abort
+from flask import jsonify, request, abort, make_response
 from flask_restful import Resource
 from mongoengine import ValidationError
 
@@ -43,13 +43,34 @@ class EventApi(Resource):
         logging.debug("Received POST data: {}".format(received_data))
         try:
             new_event = db.Event(**received_data)
-            # pdb.set_trace()
             new_event.save()
         except ValidationError as error:
-            logging.warning("POST request rejected: {}".format(str(error)))
-            return error, 400
+            if request.headers['Content-Type'] == 'application/json':
+                return make_response(jsonify({
+                    'error_type': 'validation',
+                    'validation_errors': [str(err) for err in error.errors],
+                    'error_message': error.message}),
+                    400
+                )
+            else:
+                return make_response(
+                    'Validation Error\n{}'.format(error),
+                    400
+                )
         else:  # return success
-            return str(new_event.id), 201
+            if request.headers['Content-Type'] == 'application/json':
+                return make_response(
+                    jsonify(mongo_to_dict(new_event)),
+                    201
+                )
+            else:
+                return make_response(
+                    "Event Created\n{}".format(
+                        pformat(mongo_to_dict(new_event))
+                    ),
+                    201,
+                    {'Content-Type': 'text'}
+                )
 
     def put(self, event_id):
         """Replace individual event"""
@@ -95,7 +116,7 @@ class LabelApi(Resource):
             logging.warning("POST request rejected: {}".format(str(error)))
             return error, 400
         else:  # return success
-            return str(new_event.id), 201
+            return jsonify({'id': str(new_event.id)}), 201
 
     def put(self, label_name):
         """Replace individual event"""
