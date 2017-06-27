@@ -7,7 +7,7 @@ from mongoengine import ValidationError
 from pprint import pprint, pformat
 import pdb
 
-from helpers import mongo_to_dict, request_to_dict
+from helpers import mongo_to_dict, request_to_dict, event_query, get_to_event_search
 
 import logging
 
@@ -27,8 +27,9 @@ class EventApi(Resource):
 
             return jsonify(mongo_to_dict(result))
         else:  # search database based on parameters
-            # TODO: search based on parameters
-            results = db.Event.objects()
+            query = event_query(get_to_event_search(request))
+            results = db.Event.objects(**query)
+            logging.debug('found {} events for query'.format(len(results)))
             if not results:
                 abort(404)
 
@@ -42,17 +43,34 @@ class EventApi(Resource):
         logging.debug("Received POST data: {}".format(received_data))
         try:
             new_event = db.Event(**received_data)
-            # pdb.set_trace()
             new_event.save()
         except ValidationError as error:
-            logging.warning("POST request rejected: {}".format(str(error)))
-            return make_response(jsonify({
-                'error_type': 'validation',
-                'validation_errors': [str(err) for err in error.errors],
-                'error_message': error.message}),
-                400)
+            if request.headers['Content-Type'] == 'application/json':
+                return make_response(jsonify({
+                    'error_type': 'validation',
+                    'validation_errors': [str(err) for err in error.errors],
+                    'error_message': error.message}),
+                    400
+                )
+            else:
+                return make_response(
+                    'Validation Error\n{}'.format(error),
+                    400
+                )
         else:  # return success
-            return make_response(jsonify({'id': str(new_event.id)}), 201)
+            if request.headers['Content-Type'] == 'application/json':
+                return make_response(
+                    jsonify(mongo_to_dict(new_event)),
+                    201
+                )
+            else:
+                return make_response(
+                    "Event Created\n{}".format(
+                        pformat(mongo_to_dict(new_event))
+                    ),
+                    201,
+                    {'Content-Type': 'text'}
+                )
 
     def put(self, event_id):
         """Replace individual event"""
