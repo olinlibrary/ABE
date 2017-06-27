@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """Resource models for flask"""
 from flask import jsonify, request, abort
+from flask import make_response
 from flask_restful import Resource
 from mongoengine import ValidationError
+from bson.objectid import ObjectId
 
 from pprint import pprint, pformat
 import pdb
@@ -60,7 +62,19 @@ class EventApi(Resource):
 
     def delete(self, event_id):
         """Delete individual event"""
-        pass
+        json = request.get_json(force=True)
+        event_id = json.id
+        try:
+            db.Event.deleteOne({'_id': ObjectId(event_id)})
+        except Exception as e:
+            return make_response(jsonify({
+                    'status': 'error',
+                    'message': e
+                }), 400)
+        return make_response(jsonify({
+                'status': 'success',
+                'message': 'Successfully deleted event ' + event_id
+            }), 200)
 
 
 class LabelApi(Resource):
