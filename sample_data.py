@@ -30,6 +30,15 @@ sample_events = [
     "location": "Library",
     "labels": ['summer', 'library'],
   },
+  {
+    "visibility": "olin",
+    "title": "Bowling!",
+    "start": datetime(2017, 6, 27, 17, 0),
+    "end": datetime(2017, 6, 27, 19, 0),
+    "description": 'Drive/Carpool to Lanes and Games\n- Appetizers\n- Pizza\n- Bowling\n- Etc.',
+    "location": "195 Concord Turnpike, Rte 2E\nCambridge, MA 02140",
+    "labels": ['summer', 'library', 'potluck'],
+  },
 ]
 
 sample_labels = [
@@ -53,5 +62,8 @@ sample_labels = [
     {
         "name": "summer",
         "description": "Events happening over the summer."
+    },
+    {
+        "name": "potluck",
     }
 ]
