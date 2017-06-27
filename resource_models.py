@@ -7,7 +7,7 @@ from mongoengine import ValidationError
 from pprint import pprint, pformat
 import pdb
 
-from helpers import mongo_to_dict, request_to_dict
+from helpers import mongo_to_dict, request_to_dict, event_query, get_to_event_search
 
 import logging
 
@@ -27,8 +27,9 @@ class EventApi(Resource):
 
             return jsonify(mongo_to_dict(result))
         else:  # search database based on parameters
-            # TODO: search based on parameters
-            results = db.Event.objects()
+            query = event_query(get_to_event_search(request))
+            results = db.Event.objects(**query)
+            logging.debug('found {} events for query'.format(len(results)))
             if not results:
                 abort(404)
 
