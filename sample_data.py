@@ -51,8 +51,9 @@ sample_events = [
         'description': 'reading cool books',
         'start': datetime(2017, 7, 3, 16), 
         'end': datetime(2017, 7, 3, 18),
-        'rec_id': datetime(2017,7,3,15)},
-    ]
+        'rec_id': datetime(2017,7,3,15)
+        },
+    ],
     },
 
     {

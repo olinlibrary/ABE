@@ -25,30 +25,9 @@ def request_to_dict(request):
     obj_dict = {k: v for k, v in req_dict.items() if v != ""}
 
     return obj_dict
+     
 
-def create_ics(events):
-    #initialize calendar object
-    cal = Calendar()
-    for event in events:
-        new_event = create_ics_event(event)
-
-        recurrence = event['recurrence']
-        if recurrence:
-            new_event = create_ics_recurrence(new_event, recurrence)
-
-        if event['sub_events']:
-            for sub_event in event['sub_events']:
-                new_event.add('EXDATE', sub_event['rec_id'])
-
-        #vevent.add('attendee', 'MAILTO:emily.lepert@gmail.com')
-
-        cal.add_component(new_event)
-
-
-    response = cal.to_ical()
-    return response
-
-def create_ics_event(event):
+def create_ics_event(event,recurrence=False):
     new_event = Event()
     new_event.add('summary', event['title'])
     new_event.add('location', event['location'])
@@ -58,11 +37,15 @@ def create_ics_event(event):
         new_event.add('dtend', event['end'])
     new_event.add('TRANSP', 'OPAQUE')
 
-    uid = str(event['id'])
+    if recurrence==False:
+        uid = str(event['id'])
+    else:
+        uid = str(event['sid'])
+        new_event.add('RECURRENCE-ID', event['rec_id'])
     new_event.add('UID', uid)
     return(new_event)
 
-def create_ics_recurrence(event, recurrence):
+def create_ics_recurrence(new_event, recurrence):
     rec_ics_string = {}
     frequency = recurrence['frequency']
     interval = recurrence['interval']
@@ -86,5 +69,28 @@ def create_ics_recurrence(event, recurrence):
     new_event.add('RRULE', rec_ics_string)
     return(new_event)
 
+def create_ics(events):
+    #initialize calendar object
+    cal = Calendar()
+    for event in events:
+        new_event = create_ics_event(event)
+
+        recurrence = event['recurrence']
+        if recurrence:
+            new_event = create_ics_recurrence(new_event, recurrence)
+
+        if event['sub_events']:
+            for sub_event in event['sub_events']:
+                new_sub_event = create_ics_event(sub_event, True)
+                cal.add_component(new_sub_event)
+                new_event.add('EXDATE', sub_event['rec_id'])
+
+        #vevent.add('attendee', 'MAILTO:emily.lepert@gmail.com')
+
+        cal.add_component(new_event)
+
+
+    response = cal.to_ical()
+    return response
 
 
