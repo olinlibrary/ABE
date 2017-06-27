@@ -62,8 +62,6 @@ class EventApi(Resource):
 
     def delete(self, event_id):
         """Delete individual event"""
-        json = request.get_json(force=True)
-        event_id = json.id
         try:
             db.Event.deleteOne({'_id': ObjectId(event_id)})
         except Exception as e:
