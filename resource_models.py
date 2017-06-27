@@ -62,9 +62,12 @@ class EventApi(Resource):
 
     def delete(self, event_id):
         """Delete individual event"""
+        logging.debug('Deleting event {}'.format(event_id))
         try:
             db.Event.deleteOne({'_id': ObjectId(event_id)})
         except Exception as e:
+            logging.error('Error deleting event:')
+            logging.error(e)
             return make_response(jsonify({
                     'status': 'error',
                     'message': e
