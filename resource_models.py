@@ -20,7 +20,7 @@ class EventApi(Resource):
     def get(self, event_id=None):
         """Retrieve events"""
         if event_id:  # use event id if present
-            print('eventid: ' + event_id)
+            logging.debug('Event requested: ' + event_id)
             result = db.Event.objects(id=event_id).first()
             if not result:
                 abort(404)
@@ -78,11 +78,66 @@ class EventApi(Resource):
 
     def patch(self, event_id):
         """Modify individual event"""
-        pass
+        logging.debug('Event requested: ' + event_id)
+        result = db.Event.objects(id=event_id).first()
+        if not result:
+            abort(404)
+
+        received_data = request_to_dict(request)
+        logging.debug("Received PATCH data: {}".format(received_data))
+        try:
+            result.update(**received_data)
+        except ValidationError as error:
+            if 'application/json' in request.headers['Content-Type']:
+                return make_response(jsonify({
+                    'error_type': 'validation',
+                    'validation_errors': [str(err) for err in error.errors],
+                    'error_message': error.message}),
+                    400
+                )
+            else:
+                return make_response(
+                    'Validation Error\n{}'.format(error),
+                    400
+                )
+        else:  # return success
+            if request.headers['Content-Type'] == 'application/json':
+                return make_response(
+                    jsonify(mongo_to_dict(result)),
+                    200
+                )
+            else:
+                return make_response(
+                    "Event Updated\n{}".format(
+                        pformat(mongo_to_dict(result))
+                    ),
+                    200,
+                    {'Content-Type': 'text'}
+                )
 
     def delete(self, event_id):
         """Delete individual event"""
-        pass
+        logging.debug('Event requested: ' + event_id)
+        result = db.Event.objects(id=event_id).first()
+        if not result:
+            abort(404)
+
+        received_data = request_to_dict(request)
+        logging.debug("Received DELETE data: {}".format(received_data))
+        result.delete()
+        if request.headers['Content-Type'] == 'application/json':
+            return make_response(
+                jsonify(mongo_to_dict(result)),
+                200
+            )
+        else:
+            return make_response(
+                "Event Deleted\n{}".format(
+                    pformat(mongo_to_dict(result))
+                ),
+                200,
+                {'Content-Type': 'text'}
+            )
 
 
 class LabelApi(Resource):
