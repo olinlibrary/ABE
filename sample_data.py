@@ -71,8 +71,9 @@ sample_events = [
         'count' : '4',
         'by_day' : "WE"
         }
-    }
-    {"visibility" : "olin",
+    },
+    {
+    "visibility" : "olin",
     "title": "Bowling!",
     "start": datetime(2017, 6, 27, 17, 0),
     "end": datetime(2017, 6, 27, 19, 0),

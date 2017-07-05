@@ -8,8 +8,10 @@ from pprint import pprint, pformat
 from bson import json_util, objectid
 from datetime import datetime, timedelta
 from dateutil.rrule import rrule, MONTHLY, WEEKLY, DAILY, YEARLY
-from helpers import mongo_to_dict, request_to_dict, mongo_to_ics, event_query, get_to_event_search
-import isodate
+from helpers import (
+    mongo_to_dict, request_to_dict, mongo_to_ics, event_query, get_to_event_search, 
+    recurring_to_full, update_sub_event
+    )
 from icalendar import Calendar
 
 import pdb
@@ -24,15 +26,6 @@ class EventApi(Resource):
     """API for interacting with events"""
 
     def get(self, event_id=None):
-        date_to_dt = lambda d: datetime.strptime(d, '%Y-%m-%d')
-
-        if request.form:
-            start = date_to_dt(request.form['start'])
-            end = date_to_dt(request.form['end'])
-        else:
-            start = datetime(2017,6,1)
-            end = datetime(2017, 7, 20)
-
         """Retrieve events"""
         if event_id:  # use event id if present
             print('eventid: ' + event_id)
@@ -42,83 +35,43 @@ class EventApi(Resource):
 
             return jsonify(mongo_to_dict(result))
         else:  # search database based on parameters
-            query = event_query(get_to_event_search(request))
+
+            query_dict = get_to_event_search(request)
+            query = event_query(query_dict)
             results = db.Event.objects(**query)
             logging.debug('found {} events for query'.format(len(results)))
             if not results:
                 abort(404)
 
+            if request.form: #when querying from full calendar
+                start = query_dict['start']
+                end = query_dict['end']
+            else: # when querying for testing
+                start = datetime(2017,7,1)
+                end = datetime(2017, 7, 20)
+            
 
-            events = []
-            for rec in results:
-                event = rec
+            events_list = []
+            for event in results:
                 # Replace the ID with its string version, since the object is not serializable this way
-                event['id'] = str(rec['id'])
+                event['id'] = str(event['id'])
                 #del(event['id'])
                 # checks for recurrent events
                 if 'recurrence' in event:
                     # checks for events from a recurrence that's been edited
-                    if 'sub_events' in event:
-                        for sub_event in event['sub_events']:
-                            if sub_event['start'] <= end and sub_event['start'] >= start:
-                                events.append(sub_event)
-
-
-                    recurrence = event.recurrence
-                    if recurrence['frequency'] == 'YEARLY':
-                        rFrequency = 0
-                    elif recurrence['frequency'] == 'MONTHLY':
-                        rFrequency = 1
-                    elif recurrence['frequency'] == 'WEEKLY':
-                        rFrequency = 2
-                    elif recurrence['frequency'] == 'DAILY':
-                        rFrequency = 3
-
-                    rInterval = recurrence['interval']
-                    rCount = recurrence['count'] if 'count' in recurrence else None
-                    rUntil = recurrence['until'] if 'until' in recurrence else None
-                    rByMonth = recurrence['BYMONTH'] if 'BYMONTH' in recurrence else None
-                    rByMonthDay = recurrence['BYMONTHDAY'] if 'BYMONTHDAY' in recurrence else None
-                    rByDay = recurrence['BYDAY'] if 'BYDAY' in recurrence else None
-
-
-                    rule_list = list(rrule(freq=rFrequency, count=int(rCount), interval=int(rInterval), until=rUntil, bymonth=rByMonth, \
-                        bymonthday=rByMonthDay, byweekday=None, dtstart=event['start']))
-
-                    event_end = datetime.strptime(str(event['end']), "%Y-%m-%d %H:%M:%S")
-                    event_start = datetime.strptime(str(event['start']), "%Y-%m-%d %H:%M:%S")
-
-                    for instance in rule_list:
-                        if instance >= start and instance < end:
-                            instance = datetime.strptime(str(instance), "%Y-%m-%d %H:%M:%S")
-
-                            repeat = False
-                            if 'sub_events' in event:
-                                for individual in event['sub_events']:
-                                    indiv = datetime.strptime(str(individual['recurrence-id']), "%Y-%m-%dT%H:%M:%SZ")
-                                    if instance == indiv:
-                                        repeat = True
-
-                            if repeat == False:
-                                fake_object = {}
-                                fake_object['title'] = event['title']
-                                fake_object['location'] = event['location']
-                                fake_object['description'] = event['description']
-                                fake_object['start'] = isodate.parse_datetime(instance.isoformat())
-                                fake_object['end'] = isodate.parse_datetime((event_end-event_start+instance).isoformat())  #.isoformat()
-                                fake_object['id'] = event['id']
-                                events.append(fake_object) #json.dumps(fake_object, default=json_util.default))
+                    events_list = recurring_to_full(event, events_list, start, end)
                 else:
-                    events.append(dict(event.to_mongo()))
+                    events_list.append(dict(event.to_mongo()))
 
             # TODO: fix dict to json conversion (ObjectIDs)
-            return json_util.dumps(events) #result=[json.loads(result.to_json()) for result in events])
+            return json_util.dumps(events_list) #result=[json.loads(result.to_json()) for result in events])
 
     def post(self):
         """Create new event with parameters passed in through args or form"""
         received_data = request_to_dict(request)
-        logging.debug("Received POST data: {}".format(event))  # combines args and form
+        logging.debug("Received POST data: {}".format(received_data))  # combines args and form
         try:
+            ''' <-- implement this code for updating subevents
             iso_to_dt = lambda s: datetime.strptime(s, "%Y-%m-%dT%H:%M:%SZ") - timedelta(hours=4)
 
             received_data['start'] = iso_to_dt(received_data['start'])
@@ -130,27 +83,11 @@ class EventApi(Resource):
                 received_data['rec_id'] = iso_to_dt(received_data['rec_id'])
 
             if 'sid' in received_data and received_data['sid'] is not None:
-                if 'rec_id' in received_data:
-                    rec_event = db.RecurringEventExc(**received_data)
-
-                    record_id = db.Event.objects(__raw__={'_id': objectid.ObjectId(received_data['sid'])})
-
-                    cur_sub_event = db.Event.objects(__raw__ = { '$and' : [
-                        {'_id': objectid.ObjectId(received_data['sid'])},
-                        {'sub_events.rec_id' : received_data['rec_id']}]})
-
-                    if cur_sub_event:
-                        cur_sub_event.update(set__sub_events__S=rec_event)
-                    else:
-                        record_id.update(add_to_set__sub_events=rec_event)
-
-                    logging.debug("Updated reccurence with event with id {}".format(record_id))
-                else:
-                    #record_id = db.Event.objects(id=event['id']).update(inc__id__S=event)  # Update record
-                    logging.debug("Updated entry with id {}".format(record_id))
+                update_sub_event(received_data)
             else:
-                new_event = db.Event(**received_data)
-                new_event.save()
+            '''
+            new_event = db.Event(**received_data)
+            new_event.save()
         except ValidationError as error:
             if request.headers['Content-Type'] == 'application/json':
                 return make_response(jsonify({
