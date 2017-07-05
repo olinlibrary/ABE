@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Resource models for flask"""
-from flask import jsonify, request, abort, Response
+
+from flask import jsonify, request, abort, Response, make_response
 from flask_restful import Resource
 from mongoengine import ValidationError
 from pprint import pprint, pformat
@@ -115,28 +116,28 @@ class EventApi(Resource):
 
     def post(self):
         """Create new event with parameters passed in through args or form"""
-        event = request_to_dict(request)
+        received_data = request_to_dict(request)
         logging.debug("Received POST data: {}".format(event))  # combines args and form
         try:
             iso_to_dt = lambda s: datetime.strptime(s, "%Y-%m-%dT%H:%M:%SZ") - timedelta(hours=4)
 
-            event['start'] = iso_to_dt(event['start'])
+            received_data['start'] = iso_to_dt(received_data['start'])
 
-            if 'end' in event and event['end'] is not None:
-                event['end'] = iso_to_dt(event['end'])
+            if 'end' in received_data and received_data['end'] is not None:
+                received_data['end'] = iso_to_dt(received_data['end'])
 
-            if 'rec_id' in event and event['rec_id'] is not None:
-                event['rec_id'] = iso_to_dt(event['rec_id'])
+            if 'rec_id' in received_data and received_data['rec_id'] is not None:
+                received_data['rec_id'] = iso_to_dt(received_data['rec_id'])
 
-            if 'sid' in event and event['sid'] is not None:
-                if 'rec_id' in event:
-                    rec_event = db.RecurringEventExc(**event)
+            if 'sid' in received_data and received_data['sid'] is not None:
+                if 'rec_id' in received_data:
+                    rec_event = db.RecurringEventExc(**received_data)
 
-                    record_id = db.Event.objects(__raw__={'_id': objectid.ObjectId(event['sid'])})
+                    record_id = db.Event.objects(__raw__={'_id': objectid.ObjectId(received_data['sid'])})
 
                     cur_sub_event = db.Event.objects(__raw__ = { '$and' : [
-                        {'_id': objectid.ObjectId(event['sid'])},
-                        {'sub_events.rec_id' : event['rec_id']}]})
+                        {'_id': objectid.ObjectId(received_data['sid'])},
+                        {'sub_events.rec_id' : received_data['rec_id']}]})
 
                     if cur_sub_event:
                         cur_sub_event.update(set__sub_events__S=rec_event)
@@ -148,16 +149,35 @@ class EventApi(Resource):
                     #record_id = db.Event.objects(id=event['id']).update(inc__id__S=event)  # Update record
                     logging.debug("Updated entry with id {}".format(record_id))
             else:
-
-                record_id = db.Event(**event).save()  # Insert record
-                logging.debug("Added entry with id {}".format(record_id))
-
+                new_event = db.Event(**received_data)
+                new_event.save()
         except ValidationError as error:
-            logging.warning("POST request rejected: {}".format(str(error)))
-            return error, 400
-
+            if request.headers['Content-Type'] == 'application/json':
+                return make_response(jsonify({
+                    'error_type': 'validation',
+                    'validation_errors': [str(err) for err in error.errors],
+                    'error_message': error.message}),
+                    400
+                )
+            else:
+                return make_response(
+                    'Validation Error\n{}'.format(error),
+                    400
+                )
         else:  # return success
-            return str(new_event.id), 201
+            if request.headers['Content-Type'] == 'application/json':
+                return make_response(
+                    jsonify(mongo_to_dict(new_event)),
+                    201
+                )
+            else:
+                return make_response(
+                    "Event Created\n{}".format(
+                        pformat(mongo_to_dict(new_event))
+                    ),
+                    201,
+                    {'Content-Type': 'text'}
+                )
 
     def put(self, event_id):
         """Replace individual event"""
@@ -206,7 +226,7 @@ class LabelApi(Resource):
             logging.warning("POST request rejected: {}".format(str(error)))
             return error, 400
         else:  # return success
-            return str(new_event.id), 201
+            return jsonify({'id': str(new_event.id)}), 201
 
 
     def put(self, label_name):
