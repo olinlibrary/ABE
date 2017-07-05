@@ -53,18 +53,13 @@ class EventApi(Resource):
 
             events_list = []
             for event in results:
-                # Replace the ID with its string version, since the object is not serializable this way
-                event['id'] = str(event['id'])
-                #del(event['id'])
                 # checks for recurrent events
                 if 'recurrence' in event:
                     # checks for events from a recurrence that's been edited
                     events_list = recurring_to_full(event, events_list, start, end)
                 else:
-                    events_list.append(dict(event.to_mongo()))
-
-            # TODO: fix dict to json conversion (ObjectIDs)
-            return json_util.dumps(events_list) #result=[json.loads(result.to_json()) for result in events])
+                    events_list.append(mongo_to_dict(event))
+            return jsonify(events_list)
 
     def post(self):
         """Create new event with parameters passed in through args or form"""
