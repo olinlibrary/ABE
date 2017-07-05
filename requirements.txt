@@ -3,6 +3,7 @@ aniso8601==1.2.1
 click==6.7
 Flask==0.12.2
 icalendar==3.11.4
+isodate==0.5.4
 Flask-Cors==3.0.2
 Flask-RESTful==0.3.6
 itsdangerous==0.24
