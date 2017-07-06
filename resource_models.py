@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 from dateutil.rrule import rrule, MONTHLY, WEEKLY, DAILY, YEARLY
 from helpers import (
     mongo_to_dict, request_to_dict, mongo_to_ics, event_query, get_to_event_search, 
-    recurring_to_full, update_sub_event
+    recurring_to_full, update_sub_event, ics_to_mongo
     )
 from icalendar import Calendar
 
@@ -47,8 +47,8 @@ class EventApi(Resource):
                 start = query_dict['start']
                 end = query_dict['end']
             else: # when querying for testing
-                start = datetime(2017,7,1)
-                end = datetime(2017, 7, 20)
+                start = datetime(2017,6,1)
+                end = datetime(2017, 7, 28)
             
 
             events_list = []
@@ -202,10 +202,7 @@ class ICSFeed(Resource):
 
         for component in cal.walk():
             if component.name == "VEVENT":
-                print(component.get('summary'))
-                print(component.get('dtstart'))
-                print(component.get('dtend'))
-                print(component.get('dtstamp'))
+                ics_to_mongo(component)
 
     def put(self, ics_name):
         pass

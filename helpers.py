@@ -6,7 +6,7 @@ import logging
 import pdb
 
 from icalendar import Calendar, Event, vCalAddress, vText, vDatetime
-from dateutil.rrule import rrule, MONTHLY, WEEKLY, DAILY, YEARLY, HOURLY, MINUTELY
+from dateutil.rrule import rrule, MONTHLY, WEEKLY, DAILY, YEARLY
 from datetime import datetime, timedelta
 from bson import objectid
 
@@ -43,15 +43,15 @@ def create_ics_event(event,recurrence=False):
     new_event.add('location', event['location'])
     new_event.add('description', event['description'])
     new_event.add('dtstart', event['start'])
-    if event['end'] is not None:
-        new_event.add('dtend', event['end'])
+    
     new_event.add('TRANSP', 'OPAQUE')
 
-    if recurrence==False:
+    if recurrence == False:
         uid = str(event['id'])
     else:
         uid = str(event['sid'])
         new_event.add('RECURRENCE-ID', event['rec_id'])
+        
     new_event.add('UID', uid)
     return(new_event)
 
@@ -63,7 +63,7 @@ def create_ics_recurrence(new_event, recurrence):
     rec_ics_string['interval'] = interval
 
     if 'until' in recurrence:
-        rec_ics_string['until'] = reccurrence['until']
+        rec_ics_string['until'] = recurrence['until']
     elif 'count' in recurrence:
         rec_ics_string['count'] = recurrence['count']
 
@@ -88,6 +88,11 @@ def mongo_to_ics(events):
         recurrence = event['recurrence']
         if recurrence:
             new_event = create_ics_recurrence(new_event, recurrence)
+            if event['substitute_end'] is not None:
+                new_event.add('dtend', event['substitute_end'])
+        else:
+            if event['end'] is not None:
+                new_event.add('dtend', event['end'])
 
         if event['sub_events']:
             for sub_event in event['sub_events']:
@@ -105,16 +110,29 @@ def mongo_to_ics(events):
 
 def ics_to_mongo(component):
     event_def = {}
-    '''
-    event_def['title']
-    event_def['description']
-    event_def['url']
-    event_def['email']
-    event_def['start']
-    event_def['end']
-    event_def['end_recurrence']
-    event_def['']
-    '''
+    event_def['title'] = str(component.get('summary'))
+    event_def['description'] = str(component.get('description'))
+    event_def['location'] = str(component.get('location'))
+    event_def['start'] = component.get('dtstart').dt
+    event_def['end'] = component.get('dtend').dt
+    event_def['labels'] = ['summer']
+    if component.get('rrule'):
+        rrule = component.get('rrule')
+        rec_def = {}
+        rec_def['frequency'] = str(rrule.get('freq')[0])
+        if 'until' in rrule:   
+            rec_def['until'] = rrule.get('until')[0]
+        if 'BYDAY' in rrule:
+            rec_def['by_day'] = rrule.get('BYDAY')
+        if 'INTERVAL' not in rrule:
+            rec_def['interval'] = '2'
+        else:
+            #print(component.get('interval'))
+            rec_def['interval'] = '2' # str(component.get('interval'))
+        #rec_def['interval'] = '1' if 'INTERVAL' not in rrule else str(component.get('interval'))
+        event_def['recurrence'] = rec_def
+
+    db.Event(**event_def).save()
 
 
 def get_to_event_search(request):
@@ -144,8 +162,8 @@ def event_query(search_dict):
     """Build mongo query for searching events based on query
     By default FullCalendar sends 'start' and 'end' as ISO8601 date strings"""
     params = {
-        'start': lambda a: {'start__gte': a},
-        'end': lambda a: {'end__lte': a},
+        'start': lambda a: {'end__gte': a},
+        'end': lambda a: {'start__lte': a},
         'labels': lambda a: {'labels__in': a},
         'labels_and': lambda a: {'labels__all': a},
         'labels_not': lambda a: {'labels__nin': a},
@@ -163,24 +181,29 @@ def event_query(search_dict):
 def recurring_to_full(event, events_list, start, end):
     if 'sub_events' in event:
         for sub_event in event['sub_events']:
-            if sub_event['start'] <= end and sub_event['start'] >= start:
-                events_list.append(sub_event)
+            if sub_event['start'] <= end and sub_event['end'] >= start:
+                events_list.append(dict(sub_event.to_mongo()))
 
     rec_type_list = ['YEARLY', 'MONTHLY', 'WEEKLY', 'DAILY']
+    day_list = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU']
     
     recurrence = event.recurrence
     
     rFrequency = rec_type_list.index(recurrence['frequency'])
-    rInterval = recurrence['interval']
-    rCount = recurrence['count'] if 'count' in recurrence else None
+    rInterval = int(recurrence['interval'])
+    rCount = int(recurrence['count']) if 'count' in recurrence else None
     rUntil = recurrence['until'] if 'until' in recurrence else None
-    rByMonth = recurrence['BYMONTH'] if 'BYMONTH' in recurrence else None
-    rByMonthDay = recurrence['BYMONTHDAY'] if 'BYMONTHDAY' in recurrence else None
-    rByDay = recurrence['BYDAY'] if 'BYDAY' in recurrence else None
+    rByMonth = recurrence['by_month'] if 'by_month' in recurrence else None
+    rByMonthDay = recurrence['by_month_day'] if 'by_month_day' in recurrence else None
+    
+    if 'by_day' in recurrence:
+        rByDay = []
+        for i in recurrence['by_day']:
+            rByDay.append(day_list.index(i))
 
 
-    rule_list = list(rrule(freq=rFrequency, count=int(rCount), interval=int(rInterval), until=rUntil, bymonth=rByMonth, \
-        bymonthday=rByMonthDay, byweekday=None, dtstart=event['start']))
+    rule_list = list(rrule(freq=rFrequency, count=rCount, interval=rInterval, until=rUntil, bymonth=rByMonth, \
+        bymonthday=rByMonthDay, byweekday=rByDay, dtstart=event['start']))
 
     for instance in rule_list:
         if instance >= start and instance < end:
@@ -188,9 +211,10 @@ def recurring_to_full(event, events_list, start, end):
 
     return(events_list)
 
+
 def placeholder_recurring_creation(instance, events_list, event):
     instance = datetime.strptime(str(instance), "%Y-%m-%d %H:%M:%S")
-    event_end = datetime.strptime(str(event['end']), "%Y-%m-%d %H:%M:%S")
+    event_end = datetime.strptime(str(event['substitute_end']), "%Y-%m-%d %H:%M:%S")
     event_start = datetime.strptime(str(event['start']), "%Y-%m-%d %H:%M:%S")
 
     repeat = False
@@ -207,7 +231,7 @@ def placeholder_recurring_creation(instance, events_list, event):
         fake_object['description'] = event['description']
         fake_object['start'] = isodate.parse_datetime(instance.isoformat())
         fake_object['end'] = isodate.parse_datetime((event_end-event_start+instance).isoformat())  #.isoformat()
-        fake_object['id'] = event['id']
+        fake_object['id'] = str(event['id'])
         events_list.append(fake_object) #json.dumps(fake_object, default=json_util.default))
 
     return(events_list)
