@@ -217,7 +217,6 @@ def event_query(search_dict):
     for key, get_pattern in params.items():
         if key in search_dict.keys():
             query.update(get_pattern(search_dict[key]))
-    logging.debug('new query: {}'.format(query))
     return query
 
 
@@ -242,12 +241,8 @@ def recurring_to_full(event, events_list, start, end):
 
     rule_list = list(rrule(freq=rFrequency, count=rCount, interval=rInterval, until=rUntil, bymonth=rByMonth, \
         bymonthday=rByMonthDay, byweekday=None, dtstart=event['start']))
-    logging.debug("instnaces {}".format(rule_list))
     for instance in rule_list:
-        logging.debug("bigger than {}".format(start))
-        logging.debug(" and smaller than {}".format(end))
         if instance >= start and instance < end:
-            logging.debug("this instance {}".format(instance))
             events_list = placeholder_recurring_creation(instance, events_list, event)
 
     return(events_list)

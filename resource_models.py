@@ -42,7 +42,7 @@ class EventApi(Resource):
             logging.debug('found {} events for query'.format(len(results)))
             if not results:
                 abort(404)
-            logging.debug("show query dict {}".format(query_dict))
+
             #if request.form: #when querying from full calendar
             start = datetime.strptime(query_dict['start'], '%Y-%m-%d')
             end = datetime.strptime(query_dict['end'], '%Y-%m-%d')
@@ -56,8 +56,6 @@ class EventApi(Resource):
                 # checks for recurrent events
                 if 'recurrence' in event:
                     # checks for events from a recurrence that's been edited
-
-                    logging.debug("creating recurrence")
                     events_list = recurring_to_full(event, events_list, start, end)
                 else:
                     events_list.append(mongo_to_dict(event))
