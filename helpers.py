@@ -19,6 +19,30 @@ def mongo_to_dict(obj):
     """Get dictionary from mongoengine object
     id is represented as a string
     """
+    if obj is None:
+        return None
+
+    if isinstance(obj, Document):
+        return_data.append(("id",str(obj.id)))
+
+    for field_name in obj._fields:
+
+        if field_name in exclude_fields:
+            continue
+
+        if field_name in ("id",):
+            continue
+
+        data = obj._data[field_name]
+
+        if isinstance(obj._fields[field_name], ListField):
+            return_data.append((field_name, list_field_to_dict(data)))
+        elif isinstance(obj._fields[field_name], EmbeddedDocumentField):
+            return_data.append((field_name, mongo_to_dict(data,[])))
+        elif isinstance(obj._fields[field_name], DictField):
+            return_data.append((field_name, data))
+        else:
+            return_data.append((field_name, mongo_to_python_type(obj._fields[field_name],data)))
 
     obj_dict = dict(obj.to_mongo())
     obj_dict['id'] = str(obj_dict['_id'])
@@ -31,13 +55,9 @@ def request_to_dict(request):
     """Convert incoming flask requests for objects into a dict"""
     
     req_dict = request.values.to_dict(flat=True)
-    logging.debug('req_dict: {}'.format(req_dict))
     if request.is_json:
-        logging.debug('entered json if')
         req_dict = request.get_json()  # get_dict returns python dictionary object
-        logging.debug('req_dict json: {}'.format(req_dict))
     obj_dict = {k: v for k, v in req_dict.items() if v != ""}
-    logging.debug('obj_idct: {}'.format(obj_dict))
     return obj_dict
      
 
