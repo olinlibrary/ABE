@@ -34,7 +34,7 @@ def mongo_to_dict(obj):
             continue
 
         data = obj._data[field_name]
-
+        logging.debug("data is {}".format(data))
         if isinstance(obj._fields[field_name], ListField):
             return_data.append((field_name, list_field_to_dict(data)))
         elif isinstance(obj._fields[field_name], EmbeddedDocumentField):
