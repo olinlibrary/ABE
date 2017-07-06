@@ -48,7 +48,7 @@ def mongo_to_dict(obj):
     #obj_dict['id'] = str(obj_dict['_id'])
     #del(obj_dict['_id'])
 
-    return dict(return_data.to_mongo())
+    return dict(return_data)
 
 def list_field_to_dict(list_field):
 
