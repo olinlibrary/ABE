@@ -242,9 +242,10 @@ def recurring_to_full(event, events_list, start, end):
 
     rule_list = list(rrule(freq=rFrequency, count=rCount, interval=rInterval, until=rUntil, bymonth=rByMonth, \
         bymonthday=rByMonthDay, byweekday=None, dtstart=event['start']))
-
+    logging.debug("instnaces {}".format(rule_list))
     for instance in rule_list:
         if instance >= start and instance < end:
+            logging.debug("these instance {}".format(instance))
             events_list = placeholder_recurring_creation(instance, events_list, event)
 
     return(events_list)
