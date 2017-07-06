@@ -42,7 +42,7 @@ class EventApi(Resource):
             logging.debug('found {} events for query'.format(len(results)))
             if not results:
                 abort(404)
-
+            logging.debug("show query dict {}".format(query_dict))
             #if request.form: #when querying from full calendar
             start = query_dict['start']
             end = query_dict['end']
