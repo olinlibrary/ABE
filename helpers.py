@@ -268,8 +268,8 @@ def placeholder_recurring_creation(instance, events_list, event):
         fake_object['description'] = event['description']
         fake_object['start'] = isodate.parse_datetime(instance.isoformat())
         fake_object['end'] = isodate.parse_datetime((event_end-event_start+instance).isoformat())  #.isoformat()
-        fake_object['id'] = event['id']
-        events_list.append(fake_object) #json.dumps(fake_object, default=json_util.default))
+        fake_object['sid'] = event['id']
+        events_list.append(mongo_to_dict(fake_object)) #json.dumps(fake_object, default=json_util.default))
 
     return(events_list)
 
