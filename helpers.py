@@ -232,15 +232,15 @@ def recurring_to_full(event, events_list, start, end):
     recurrence = event.recurrence
     
     rFrequency = rec_type_list.index(recurrence['frequency'])
-    rInterval = recurrence['interval']
-    rCount = recurrence['count'] if 'count' in recurrence else None
+    rInterval = int(recurrence['interval'])
+    rCount = int(recurrence['count']) if 'count' in recurrence else None
     rUntil = recurrence['until'] if 'until' in recurrence else None
     rByMonth = recurrence['BYMONTH'] if 'BYMONTH' in recurrence else None
     rByMonthDay = recurrence['BYMONTHDAY'] if 'BYMONTHDAY' in recurrence else None
     rByDay = recurrence['BYDAY'] if 'BYDAY' in recurrence else None
 
 
-    rule_list = list(rrule(freq=rFrequency, count=int(rCount), interval=int(rInterval), until=rUntil, bymonth=rByMonth, \
+    rule_list = list(rrule(freq=rFrequency, count=rCount, interval=rInterval, until=rUntil, bymonth=rByMonth, \
         bymonthday=rByMonthDay, byweekday=None, dtstart=event['start']))
 
     for instance in rule_list:
