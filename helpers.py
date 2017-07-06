@@ -9,6 +9,7 @@ from icalendar import Calendar, Event, vCalAddress, vText, vDatetime
 from dateutil.rrule import rrule, MONTHLY, WEEKLY, DAILY, YEARLY, HOURLY, MINUTELY
 from datetime import datetime, timedelta
 from bson import objectid
+from mongoengine import *
 
 import isodate
 
