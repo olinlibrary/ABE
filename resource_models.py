@@ -44,6 +44,7 @@ class EventApi(Resource):
                 abort(404)
 
             if request.form: #when querying from full calendar
+                logging.debug("using request.form")
                 start = query_dict['start']
                 end = query_dict['end']
             else: # when querying for testing
