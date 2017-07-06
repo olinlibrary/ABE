@@ -10,7 +10,7 @@ class RecurringEventDefinition(EmbeddedDocument):
     interval = StringField(required=True)
     count = StringField()
     until = DateTimeField()
-    by_day = StringField()
+    by_day = ListField(StringField())
     by_month_day = StringField()
     by_month = StringField()
 
