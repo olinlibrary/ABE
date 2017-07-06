@@ -225,7 +225,7 @@ def recurring_to_full(event, events_list, start, end):
     if 'sub_events' in event:
         for sub_event in event['sub_events']:
             if sub_event['start'] <= end and sub_event['start'] >= start:
-                events_list.append(dict(sub_event.to_mongo()))
+                events_list.append(mongo_to_dict(sub_event))
 
     rec_type_list = ['YEARLY', 'MONTHLY', 'WEEKLY', 'DAILY']
     
