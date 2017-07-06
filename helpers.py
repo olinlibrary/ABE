@@ -245,7 +245,7 @@ def recurring_to_full(event, events_list, start, end):
     logging.debug("instnaces {}".format(rule_list))
     for instance in rule_list:
         logging.debug("bigger than {}".format(start))
-        logging.debug(" and smaller than {}".format(start, end))
+        logging.debug(" and smaller than {}".format(end))
         if instance >= start and instance < end:
             logging.debug("this instance {}".format(instance))
             events_list = placeholder_recurring_creation(instance, events_list, event)
