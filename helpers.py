@@ -251,12 +251,12 @@ def recurring_to_full(event, events_list, start, end):
 
 def placeholder_recurring_creation(instance, events_list, event):
     instance = datetime.strptime(str(instance), "%Y-%m-%d %H:%M:%S")
-    logging.debug("event_end is {}".format(str(event['end'])))
+    logging.debug("event_end old is {}".format(str(event['end'])))
     try:
-        
         event_end = datetime.strptime(str(event['end']), "%Y-%m-%d %H:%M:%S")
     except:
         event_end = datetime.strptime(str(event['end'])[:-7], "%Y-%m-%d %H:%M:%S")
+    logging.debug("event_end new is {}".format(str(event_end)))
     event_start = datetime.strptime(str(event['start']), "%Y-%m-%d %H:%M:%S")
 
     repeat = False
