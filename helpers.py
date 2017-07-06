@@ -20,6 +20,7 @@ def mongo_to_dict(obj):
     """Get dictionary from mongoengine object
     id is represented as a string
     """
+    return_data = []
     if obj is None:
         return None
 
@@ -45,11 +46,11 @@ def mongo_to_dict(obj):
         else:
             return_data.append((field_name, mongo_to_python_type(obj._fields[field_name],data)))
 
-    obj_dict = dict(obj.to_mongo())
-    obj_dict['id'] = str(obj_dict['_id'])
-    del(obj_dict['_id'])
+    #obj_dict = dict(obj.to_mongo())
+    #obj_dict['id'] = str(obj_dict['_id'])
+    #del(obj_dict['_id'])
 
-    return obj_dict
+    return dict(return_data.to_mongo())
 
 
 def request_to_dict(request):
