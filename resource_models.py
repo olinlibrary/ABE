@@ -63,6 +63,7 @@ class EventApi(Resource):
 
     def post(self):
         """Create new event with parameters passed in through args or form"""
+        logging.debug('request info: {}'.format(request))
         received_data = request_to_dict(request)
         logging.debug("Received POST data: {}".format(received_data))  # combines args and form
         try:
