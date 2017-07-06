@@ -44,8 +44,8 @@ class EventApi(Resource):
                 abort(404)
             logging.debug("show query dict {}".format(query_dict))
             #if request.form: #when querying from full calendar
-            start = query_dict['start']
-            end = query_dict['end']
+            start = datetime.strptime(query_dict['start'], '%Y-%m-%d')
+            end = datetime.strptime(query_dict['end'], '%Y-%m-%d')
             #else: # when querying for testing
                 #start = datetime(2017,7,1)
                 #end = datetime(2017, 7, 20)
