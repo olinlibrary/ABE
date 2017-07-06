@@ -3,11 +3,12 @@
 from flask import jsonify, request, abort, make_response
 from flask_restful import Resource
 from mongoengine import ValidationError
+from bson.objectid import ObjectId
 
 from pprint import pprint, pformat
 import pdb
 
-from helpers import mongo_to_dict, request_to_dict, event_query, get_to_event_search
+from helpers import *
 
 import logging
 
@@ -38,7 +39,6 @@ class EventApi(Resource):
 
     def post(self):
         """Create new event with parameters passed in through args or form"""
-        # pdb.set_trace()
         received_data = request_to_dict(request)
         logging.debug("Received POST data: {}".format(received_data))
         try:
@@ -73,10 +73,6 @@ class EventApi(Resource):
                 )
 
     def put(self, event_id):
-        """Replace individual event"""
-        pass
-
-    def patch(self, event_id):
         """Modify individual event"""
         logging.debug('Event requested: ' + event_id)
         result = db.Event.objects(id=event_id).first()
@@ -84,7 +80,7 @@ class EventApi(Resource):
             abort(404)
 
         received_data = request_to_dict(request)
-        logging.debug("Received PATCH data: {}".format(received_data))
+        logging.debug("Received PUT data: {}".format(received_data))
         try:
             result.update(**received_data)
         except ValidationError as error:
@@ -101,7 +97,7 @@ class EventApi(Resource):
                     400
                 )
         else:  # return success
-            if request.headers['Content-Type'] == 'application/json':
+            if 'application/json' in request.headers['Content-Type']:
                 return make_response(
                     jsonify(mongo_to_dict(result)),
                     200
@@ -125,7 +121,7 @@ class EventApi(Resource):
         received_data = request_to_dict(request)
         logging.debug("Received DELETE data: {}".format(received_data))
         result.delete()
-        if request.headers['Content-Type'] == 'application/json':
+        if 'application/json' in request.headers['Content-Type']:
             return make_response(
                 jsonify(mongo_to_dict(result)),
                 200
@@ -145,8 +141,10 @@ class LabelApi(Resource):
 
     def get(self, label_name=None):
         """Retrieve labels"""
-        if label_name:  # use event id if present
-            result = db.Label.objects(name=label_name).first()
+        if label_name:  # use label name/object id if present
+            logging.debug('Label requested: ' + label_name)
+            search_fields = ['name', 'id']
+            result = multi_search(db.Label, label_name, search_fields)
             if not result:
                 abort(404)
             else:
@@ -164,23 +162,73 @@ class LabelApi(Resource):
         received_data = request_to_dict(request)
         logging.debug("Received POST data: {}".format(received_data))
         try:
-            new_event = db.Label(**received_data)
-            # pdb.set_trace()
-            new_event.save()
+            new_label = db.Label(**received_data)
+            new_label.save()
         except ValidationError as error:
             logging.warning("POST request rejected: {}".format(str(error)))
             return error, 400
         else:  # return success
-            return jsonify({'id': str(new_event.id)}), 201
+            return jsonify({'id': str(new_label.id)}), 201
 
     def put(self, label_name):
-        """Replace individual event"""
-        pass
+        """Modify individual label"""
+        logging.debug('Label requested: ' + label_name)
+        search_fields = ['name', 'id']
+        result = multi_search(db.Label, label_name, search_fields)
+        if not result:
+            abort(404)
 
-    def patch(self, label_name):
-        """Modify individual event"""
-        pass
+        try:
+            result.update(**received_data)
+        except ValidationError as error:
+            if 'application/json' in request.headers['Content-Type']:
+                return make_response(jsonify({
+                    'error_type': 'validation',
+                    'validation_errors': [str(err) for err in error.errors],
+                    'error_message': error.message}),
+                    400
+                )
+            else:
+                return make_response(
+                    'Validation Error\n{}'.format(error),
+                    400
+                )
+        else:  # return success
+            if 'application/json' in request.headers['Content-Type']:
+                return make_response(
+                    jsonify(mongo_to_dict(result)),
+                    200
+                )
+            else:
+                return make_response(
+                    "Label Updated\n{}".format(
+                        pformat(mongo_to_dict(result))
+                    ),
+                    200,
+                    {'Content-Type': 'text'}
+                )
 
     def delete(self, label_name):
-        """Delete individual event"""
-        pass
+        """Delete individual label"""
+        logging.debug('Label requested: ' + label_name)
+        search_fields = ['name', 'id']
+        result = multi_search(db.Label, label_name, search_fields)
+        if not result:
+            abort(404)
+
+        received_data = request_to_dict(request)
+        logging.debug("Received DELETE data: {}".format(received_data))
+        result.delete()
+        if 'application/json' in request.headers['Content-Type']:
+            return make_response(
+                jsonify(mongo_to_dict(result)),
+                200
+            )
+        else:
+            return make_response(
+                "Event Deleted\n{}".format(
+                    pformat(mongo_to_dict(result))
+                ),
+                200,
+                {'Content-Type': 'text'}
+            )
