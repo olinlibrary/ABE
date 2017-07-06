@@ -56,6 +56,8 @@ class EventApi(Resource):
                 # checks for recurrent events
                 if 'recurrence' in event:
                     # checks for events from a recurrence that's been edited
+
+                    logging.debug("creating recurrence")
                     events_list = recurring_to_full(event, events_list, start, end)
                 else:
                     events_list.append(mongo_to_dict(event))
@@ -63,7 +65,6 @@ class EventApi(Resource):
 
     def post(self):
         """Create new event with parameters passed in through args or form"""
-        logging.debug("request info: {}".format(request))
         received_data = request_to_dict(request)
         logging.debug("Received POST data: {}".format(received_data))  # combines args and form
         try:
