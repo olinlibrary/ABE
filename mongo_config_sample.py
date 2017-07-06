@@ -17,6 +17,6 @@ mongodb_options = {
 
 uri_format = 'mongodb://{username}:"{password}"@{host}:{port}'
 
-mongo_uri = uri_format.format(**mongodb_options)
+uri = uri_format.format(**mongodb_options)
 mongo_db_name = 'testing'  # name of database to use, overridden by uri
 use_local = False  # ignore the uri and use locally hosted mongodb instance
