@@ -269,6 +269,7 @@ def placeholder_recurring_creation(instance, events_list, event):
         fake_object['start'] = isodate.parse_datetime(instance.isoformat())
         fake_object['end'] = isodate.parse_datetime((event_end-event_start+instance).isoformat())  #.isoformat()
         fake_object['sid'] = str(event['id'])
+        fake_object['labels'] = event['labels']
         events_list.append(fake_object) #json.dumps(fake_object, default=json_util.default))
 
     return(events_list)
