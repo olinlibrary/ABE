@@ -40,7 +40,7 @@ class Event(Document):
     end_recurrence = DateTimeField()
 
     visibility = StringField(default='olin', choices=VISIBILITY)
-    labels = ListField(StringField())  # TODO: max length of label names?
+    labels = ListField(StringField(default='unlabeled'))  # TODO: max length of label names?
 
     recurrence = EmbeddedDocumentField(RecurringEventDefinition)
     sub_events = ListField(EmbeddedDocumentField(RecurringEventExc))
