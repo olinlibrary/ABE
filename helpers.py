@@ -51,7 +51,7 @@ def mongo_to_dict(obj):
     return dict(return_data.to_mongo())
 
 def mongo_to_python_type(field,data):
-
+    '''
     if isinstance(field, DateTimeField):
         return str(data.isoformat())
     elif isinstance(field, ComplexDateTimeField):
@@ -64,7 +64,9 @@ def mongo_to_python_type(field,data):
         return int(data)
     elif isinstance(field, BooleanField):
         return bool(data)
-    elif isinstance(field, ObjectIdField):
+    el 
+    '''
+    if isinstance(field, ObjectIdField):
         return str(data)
     elif isinstance(field, DecimalField):
         return data
