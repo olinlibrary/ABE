@@ -29,8 +29,6 @@ def mongo_to_dict(obj):
 
     for field_name in obj._fields:
 
-        if field_name in exclude_fields:
-            continue
 
         if field_name in ("id",):
             continue
