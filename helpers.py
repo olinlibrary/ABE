@@ -29,12 +29,15 @@ def mongo_to_dict(obj):
 
 def request_to_dict(request):
     """Convert incoming flask requests for objects into a dict"""
-    logging.debug('request info: {}'.format(request))
+    
     req_dict = request.values.to_dict(flat=True)
+    logging.debug('req_dict: {}'.format(req_dict))
     if request.is_json:
+        logging.debug('entered json if')
         req_dict = request.get_json()  # get_dict returns python dictionary object
+        logging.debug('req_dict json: {}'.format(req_dict))
     obj_dict = {k: v for k, v in req_dict.items() if v != ""}
-
+    logging.debug('obj_idct: {}'.format(obj_dict))
     return obj_dict
      
 
