@@ -17,13 +17,14 @@ class RecurringEventDefinition(EmbeddedDocument):
 
 class RecurringEventExc(EmbeddedDocument):  # TODO: get a better name
     """Model for Exceptions to recurring events"""
-    sid = StringField()
+    sid = StringField(required=True)
     title = StringField()
     location = StringField()
     description = StringField()
     start = DateTimeField()
     end = DateTimeField()
-    rec_id = DateTimeField()
+    rec_id = DateTimeField(required=True)
+    deleted = BooleanField(default=False)
 
 
 class Event(Document):

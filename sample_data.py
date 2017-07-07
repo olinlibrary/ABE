@@ -43,7 +43,7 @@ sample_events = [
         'frequency' : 'WEEKLY',
         'interval' : '1',
         'count' : '7',
-        'by_day' : "MO"
+        'by_day' : ["MO"]
         },
     'sub_events' : [
        {'title':'Not a club',
@@ -69,7 +69,7 @@ sample_events = [
         'frequency' : 'WEEKLY',
         'interval' : '1',
         'count' : '4',
-        'by_day' : "WE"
+        'by_day' : ["WE"]
         }
     },
     {

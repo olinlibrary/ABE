@@ -239,7 +239,8 @@ def multi_search(table, thing_to_search, fields):
 def recurring_to_full(event, events_list, start, end):
     if 'sub_events' in event:
         for sub_event in event['sub_events']:
-            if sub_event['start'] <= end and sub_event['start'] >= start:
+            if sub_event['start'] <= end and sub_event['start'] >= start \
+                and sub_event['deleted']==True:
                 events_list.append(mongo_to_dict(sub_event))
 
     rec_type_list = ['YEARLY', 'MONTHLY', 'WEEKLY', 'DAILY']
@@ -295,11 +296,11 @@ def placeholder_recurring_creation(instance, events_list, event):
     return(events_list)
 
 
-def update_sub_event(received_data):
+def update_sub_event(received_data, result):
     if 'rec_id' in received_data:
         rec_event = db.RecurringEventExc(**received_data)
 
-        record_id = db.Event.objects(__raw__={'_id': objectid.ObjectId(received_data['sid'])})
+        #record_id = db.Event.objects(__raw__={'_id': objectid.ObjectId(received_data['sid'])})
 
         cur_sub_event = db.Event.objects(__raw__ = { '$and' : [
             {'_id': objectid.ObjectId(received_data['sid'])},
@@ -308,7 +309,7 @@ def update_sub_event(received_data):
         if cur_sub_event:
             cur_sub_event.update(set__sub_events__S=rec_event)
         else:
-            record_id.update(add_to_set__sub_events=rec_event)
+            result.update(add_to_set__sub_events=rec_event)
 
         logging.debug("Updated reccurence with event with id {}".format(record_id))
     else:
