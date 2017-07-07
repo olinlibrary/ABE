@@ -31,24 +31,20 @@ def mongo_to_dict(obj):
 
     for field_name in obj._fields:
 
+        if obj[field_name]:  # check if field is populated
+            if field_name in ("id",):
+                continue
 
-        if field_name in ("id",):
-            continue
-
-        data = obj._data[field_name]
-        logging.debug("data is {}".format(data))
-        if isinstance(obj._fields[field_name], ListField):
-            return_data.append((field_name, list_field_to_dict(data)))
-        elif isinstance(obj._fields[field_name], EmbeddedDocumentField):
-            return_data.append((field_name, mongo_to_dict(data)))
-        elif isinstance(obj._fields[field_name], DictField):
-            return_data.append((field_name, data))
-        else:
-            return_data.append((field_name, mongo_to_python_type(obj._fields[field_name],data)))
-
-    #obj_dict = dict(obj.to_mongo())
-    #obj_dict['id'] = str(obj_dict['_id'])
-    #del(obj_dict['_id'])
+            data = obj[field_name]
+            logging.debug("data is {}".format(data))
+            if isinstance(obj._fields[field_name], ListField):
+                return_data.append((field_name, list_field_to_dict(data)))
+            elif isinstance(obj._fields[field_name], EmbeddedDocumentField):
+                return_data.append((field_name, mongo_to_dict(data)))
+            elif isinstance(obj._fields[field_name], DictField):
+                return_data.append((field_name, data))
+            else:
+                return_data.append((field_name, mongo_to_python_type(obj._fields[field_name],data)))
 
     return dict(return_data)
 
@@ -80,7 +76,7 @@ def mongo_to_python_type(field,data):
         return int(data)
     elif isinstance(field, BooleanField):
         return bool(data)
-    el 
+    el
     '''
     if isinstance(field, ObjectIdField):
         return str(data)
@@ -92,13 +88,13 @@ def mongo_to_python_type(field,data):
 
 def request_to_dict(request):
     """Convert incoming flask requests for objects into a dict"""
-    
+
     req_dict = request.values.to_dict(flat=True)
     if request.is_json:
         req_dict = request.get_json()  # get_dict returns python dictionary object
     obj_dict = {k: v for k, v in req_dict.items() if v != ""}
     return obj_dict
-     
+
 
 def create_ics_event(event,recurrence=False):
     new_event = Event()
@@ -243,9 +239,9 @@ def recurring_to_full(event, events_list, start, end):
                 events_list.append(mongo_to_dict(sub_event))
 
     rec_type_list = ['YEARLY', 'MONTHLY', 'WEEKLY', 'DAILY']
-    
+
     recurrence = event.recurrence
-    
+
     rFrequency = rec_type_list.index(recurrence['frequency'])
     rInterval = int(recurrence['interval'])
     rCount = int(recurrence['count']) if 'count' in recurrence else None
