@@ -222,7 +222,7 @@ def event_query(search_dict):
     return query
 
 
-  def multi_search(table, thing_to_search, fields):
+def multi_search(table, thing_to_search, fields):
     """Search multiple fields with the same input
     This could be done with $or and __raw__ with mongoengine but ObjectID needs to be cast/checked correctly.
     """
