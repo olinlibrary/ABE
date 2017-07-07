@@ -17,7 +17,7 @@ class RecurringEventDefinition(EmbeddedDocument):
 
 class RecurringEventExc(EmbeddedDocument):  # TODO: get a better name
     """Model for Exceptions to recurring events"""
-    sid = StringField(required=True)
+    sid = StringField()
     title = StringField()
     location = StringField()
     description = StringField()
@@ -25,7 +25,7 @@ class RecurringEventExc(EmbeddedDocument):  # TODO: get a better name
     end = DateTimeField()
     url = URLField()
     email = EmailField()
-    rec_id = DateTimeField(required=True)
+    rec_id = DateTimeField()
     deleted = BooleanField(default=False)
 
 

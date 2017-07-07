@@ -239,10 +239,14 @@ def multi_search(table, thing_to_search, fields):
 def recurring_to_full(event, events_list, start, end):
     if 'sub_events' in event:
         for sub_event in event['sub_events']:
-            if sub_event['start'] <= end and sub_event['start'] >= start \
-                and sub_event['deleted']==True:
-
-                events_list.append(sub_event_to_full(sub_event, event))
+            if 'start' in sub_event:
+                if sub_event['start'] <= end and sub_event['start'] >= start \
+                    and sub_event['deleted']==False:
+                    events_list.append(sub_event_to_full(sub_event, event))
+            else:
+                if sub_event['rec_id'] <= end and sub_event['rec_id'] >= start \
+                    and sub_event['deleted']==False:
+                    events_list.append(sub_event_to_full(sub_event, event))
 
     rec_type_list = ['YEARLY', 'MONTHLY', 'WEEKLY', 'DAILY']
     
@@ -323,6 +327,7 @@ def sub_event_to_full(sub_event, event):
             if field not in recurring_def_fields:
                 sub_event_dict[field] = event[field]
         elif event[field] == sub_event_dict[field]:
+            sub_event.update({ '$unset': { field: '1' } })
             
     return(sub_event_dict)
 
