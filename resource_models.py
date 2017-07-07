@@ -43,12 +43,12 @@ class EventApi(Resource):
             if not results:
                 abort(404)
 
-            #if request.form: #when querying from full calendar
-            start = datetime.strptime(query_dict['start'], '%Y-%m-%d')
-            end = datetime.strptime(query_dict['end'], '%Y-%m-%d')
-            #else: # when querying for testing
-                #start = datetime(2017,7,1)
-                #end = datetime(2017, 7, 20)
+            if 'start' in query_dict: #when querying from full calendar
+                start = datetime.strptime(query_dict['start'], '%Y-%m-%d')
+                end = datetime.strptime(query_dict['end'], '%Y-%m-%d')
+            else: # when querying for testing
+                start = datetime(2017,7,1)
+                end = datetime(2017, 7, 20)
             
 
             events_list = []
