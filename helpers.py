@@ -241,7 +241,8 @@ def recurring_to_full(event, events_list, start, end):
         for sub_event in event['sub_events']:
             if sub_event['start'] <= end and sub_event['start'] >= start \
                 and sub_event['deleted']==True:
-                events_list.append(mongo_to_dict(sub_event))
+
+                events_list.append(sub_event_to_full(sub_event, event))
 
     rec_type_list = ['YEARLY', 'MONTHLY', 'WEEKLY', 'DAILY']
     
@@ -313,3 +314,16 @@ def update_sub_event(received_data, result):
     logging.debug("Updated reccurence with event with id {}".format(record_id))
 
     return(record_id)
+
+def sub_event_to_full(sub_event, event):
+    recurring_def_fields = ["end_recurrence", "recurrence", "sub_events"]
+    sub_event_dict = mongo_to_dict(sub_event)
+    for field in event:
+        if field not in sub_event_dict:
+            if field not in recurring_def_fields:
+                sub_event_dict[field] = event[field]
+        elif event[field] == sub_event_dict[field]:
+            
+    return(sub_event_dict)
+
+
