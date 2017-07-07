@@ -37,8 +37,8 @@ class EventApi(Resource):
                 logging.debug('Sub_event requested: ' + rec_id)
                 result = placeholder_recurring_creation(rec_id, [], result, True)
                 if not result:
-                    abort(404)
-                return jsonify(result)
+                    return "Subevent not found with identifier '{}'".format(rec_id), 404
+                return result
             if not result:
                 return "Event not found with identifier '{}'".format(event_id), 404
             return mongo_to_dict(result)
