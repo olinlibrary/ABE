@@ -265,7 +265,7 @@ def recurring_to_full(event, events_list, start, end):
 
 def placeholder_recurring_creation(instance, events_list, event):
     try:
-        instance = datetime.strptime(str(instance), "%Y-%m-%d %H:%M:%S")
+        instance = datetime.strptime(str(instance), "%Y-%m-%dT%H:%M:%S.%fZ")
     except:
         instance = datetime.datetime.fromtimestamp(instance/1000.0)
     try:
