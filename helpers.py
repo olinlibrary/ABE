@@ -9,6 +9,7 @@ from icalendar import Calendar, Event, vCalAddress, vText, vDatetime
 from dateutil.rrule import rrule, MONTHLY, WEEKLY, DAILY, YEARLY
 from datetime import datetime, timedelta
 from bson import objectid
+from mongoengine import *
 
 import isodate
 
@@ -19,21 +20,81 @@ def mongo_to_dict(obj):
     """Get dictionary from mongoengine object
     id is represented as a string
     """
+    return_data = []
+    if obj is None:
+        return None
 
-    obj_dict = dict(obj.to_mongo())
-    obj_dict['id'] = str(obj_dict['_id'])
-    del(obj_dict['_id'])
+    if isinstance(obj, Document):
+        return_data.append(("id",str(obj.id)))
 
-    return obj_dict
+    for field_name in obj._fields:
+
+
+        if field_name in ("id",):
+            continue
+
+        data = obj._data[field_name]
+        logging.debug("data is {}".format(data))
+        if isinstance(obj._fields[field_name], ListField):
+            return_data.append((field_name, list_field_to_dict(data)))
+        elif isinstance(obj._fields[field_name], EmbeddedDocumentField):
+            return_data.append((field_name, mongo_to_dict(data)))
+        elif isinstance(obj._fields[field_name], DictField):
+            return_data.append((field_name, data))
+        else:
+            return_data.append((field_name, mongo_to_python_type(obj._fields[field_name],data)))
+
+    #obj_dict = dict(obj.to_mongo())
+    #obj_dict['id'] = str(obj_dict['_id'])
+    #del(obj_dict['_id'])
+
+    return dict(return_data)
+
+def list_field_to_dict(list_field):
+
+    return_data = []
+
+    for item in list_field:
+        if isinstance(item, EmbeddedDocument):
+            return_data.append(mongo_to_dict(item,[]))
+        else:
+            return_data.append(mongo_to_python_type(item,item))
+
+
+    return return_data
+
+
+def mongo_to_python_type(field,data):
+    '''
+    if isinstance(field, DateTimeField):
+        return str(data.isoformat())
+    elif isinstance(field, ComplexDateTimeField):
+        return field.to_python(data).isoformat()
+    elif isinstance(field, StringField):
+        return str(data)
+    elif isinstance(field, FloatField):
+        return float(data)
+    elif isinstance(field, IntField):
+        return int(data)
+    elif isinstance(field, BooleanField):
+        return bool(data)
+    el 
+    '''
+    if isinstance(field, ObjectIdField):
+        return str(data)
+    elif isinstance(field, DecimalField):
+        return data
+    else:
+        return str(data)
 
 
 def request_to_dict(request):
     """Convert incoming flask requests for objects into a dict"""
+    
     req_dict = request.values.to_dict(flat=True)
     if request.is_json:
         req_dict = request.get_json()  # get_dict returns python dictionary object
     obj_dict = {k: v for k, v in req_dict.items() if v != ""}
-
     return obj_dict
      
 
@@ -174,15 +235,14 @@ def event_query(search_dict):
     for key, get_pattern in params.items():
         if key in search_dict.keys():
             query.update(get_pattern(search_dict[key]))
-    logging.debug('new query: {}'.format(query))
     return query
 
 
 def recurring_to_full(event, events_list, start, end):
     if 'sub_events' in event:
         for sub_event in event['sub_events']:
-            if sub_event['start'] <= end and sub_event['end'] >= start:
-                events_list.append(dict(sub_event.to_mongo()))
+            if sub_event['start'] <= end and sub_event['start'] >= start:
+                events_list.append(mongo_to_dict(sub_event))
 
     rec_type_list = ['YEARLY', 'MONTHLY', 'WEEKLY', 'DAILY']
     day_list = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU']
@@ -204,7 +264,6 @@ def recurring_to_full(event, events_list, start, end):
 
     rule_list = list(rrule(freq=rFrequency, count=rCount, interval=rInterval, until=rUntil, bymonth=rByMonth, \
         bymonthday=rByMonthDay, byweekday=rByDay, dtstart=event['start']))
-
     for instance in rule_list:
         if instance >= start and instance < end:
             events_list = placeholder_recurring_creation(instance, events_list, event)
@@ -214,8 +273,14 @@ def recurring_to_full(event, events_list, start, end):
 
 def placeholder_recurring_creation(instance, events_list, event):
     instance = datetime.strptime(str(instance), "%Y-%m-%d %H:%M:%S")
-    event_end = datetime.strptime(str(event['substitute_end']), "%Y-%m-%d %H:%M:%S")
-    event_start = datetime.strptime(str(event['start']), "%Y-%m-%d %H:%M:%S")
+    try:
+        event_end = datetime.strptime(str(event['end']), "%Y-%m-%d %H:%M:%S")
+    except:
+        event_end = datetime.strptime(str(event['end'])[:-7], "%Y-%m-%d %H:%M:%S")
+    try:
+        event_start = datetime.strptime(str(event['start']), "%Y-%m-%d %H:%M:%S")
+    except:
+        event_start = datetime.strptime(str(event['start'])[:-7], "%Y-%m-%d %H:%M:%S")
 
     repeat = False
     if 'sub_events' in event:
@@ -231,7 +296,9 @@ def placeholder_recurring_creation(instance, events_list, event):
         fake_object['description'] = event['description']
         fake_object['start'] = isodate.parse_datetime(instance.isoformat())
         fake_object['end'] = isodate.parse_datetime((event_end-event_start+instance).isoformat())  #.isoformat()
-        fake_object['id'] = str(event['id'])
+        fake_object['sid'] = str(event['id'])
+        fake_object['labels'] = event['labels']
+
         events_list.append(fake_object) #json.dumps(fake_object, default=json_util.default))
 
     return(events_list)

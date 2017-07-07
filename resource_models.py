@@ -43,28 +43,25 @@ class EventApi(Resource):
             if not results:
                 abort(404)
 
-            if request.form: #when querying from full calendar
-                start = query_dict['start']
-                end = query_dict['end']
-            else: # when querying for testing
-                start = datetime(2017,6,1)
-                end = datetime(2017, 7, 28)
-            
+            if 'start' in query_dict:
+                start = datetime.strptime(query_dict['start'], '%Y-%m-%d')
+            else:
+                start = datetime(2017,7,1)
+            if 'end' in query_dict:
+                end = datetime.strptime(query_dict['end'], '%Y-%m-%d')
+            else:
+                end = datetime(2017, 7, 20)
+
 
             events_list = []
             for event in results:
-                # Replace the ID with its string version, since the object is not serializable this way
-                event['id'] = str(event['id'])
-                #del(event['id'])
                 # checks for recurrent events
                 if 'recurrence' in event:
                     # checks for events from a recurrence that's been edited
                     events_list = recurring_to_full(event, events_list, start, end)
                 else:
-                    events_list.append(dict(event.to_mongo()))
-
-            # TODO: fix dict to json conversion (ObjectIDs)
-            return json_util.dumps(events_list) #result=[json.loads(result.to_json()) for result in events])
+                    events_list.append(mongo_to_dict(event))
+            return jsonify(events_list)
 
     def post(self):
         """Create new event with parameters passed in through args or form"""

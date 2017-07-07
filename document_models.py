@@ -11,8 +11,8 @@ class RecurringEventDefinition(EmbeddedDocument):
     count = StringField()
     until = DateTimeField()
     by_day = ListField(StringField())
-    by_month_day = ListField(StringField())
-    by_month = ListField(StringField())
+    by_month_day = StringField()
+    by_month = StringField()
 
 
 class RecurringEventExc(EmbeddedDocument):  # TODO: get a better name
@@ -40,7 +40,7 @@ class Event(Document):
     substitute_end = DateTimeField()
 
     visibility = StringField(default='olin', choices=VISIBILITY)
-    labels = ListField(StringField())  # TODO: max length of label names?
+    labels = ListField(StringField(), default=['unlabeled'])  # TODO: max length of label names?
 
     recurrence = EmbeddedDocumentField(RecurringEventDefinition)
     sub_events = ListField(EmbeddedDocumentField(RecurringEventExc))

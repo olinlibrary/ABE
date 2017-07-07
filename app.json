@@ -5,6 +5,9 @@
   "env": {
     "MONGO_URI": {
       "required": true
+    },
+    "DB_NAME": {
+      "required": true
     }
   },
   "formation": {
