@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Connect to mongodb"""
 from mongoengine import *
-from document_models import Event, Label
+from document_models import Event, Label, RecurringEventExc
 import os
 import logging
 
@@ -12,7 +12,7 @@ if config_present:
 else:
     use_local = False
     uri = None
-    db_name = None
+    db_name = "no-config"
 mongo_uri = os.getenv('MONGO_URI', uri) if not use_local else None
 mongo_db_name = os.getenv('DB_NAME', db_name)
 

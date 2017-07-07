@@ -5,13 +5,14 @@
   "env": {
     "MONGO_URI": {
       "required": true
+    },
+    "DB_NAME": {
+      "required": true
     }
   },
   "formation": {
   },
-  "addons": [
-
-  ],
+  "addons": [],
   "buildpacks": [
     {
       "url": "heroku/python"

@@ -32,6 +32,48 @@ sample_events = [
   },
   {
     "visibility": "olin",
+    'title':'Book Club',
+    'location': 'Quiet Reading Room',
+    'description': 'reading cool books',
+    'start': datetime(2017, 6, 19, 15), 
+    'end': datetime(2017, 6, 19, 16),
+    'end_recurrence' : datetime(2017, 7, 31,0),
+    "labels": ["summer", "library"],
+    'recurrence' : {
+        'frequency' : 'WEEKLY',
+        'interval' : '1',
+        'count' : '7',
+        'by_day' : "MO"
+        },
+    'sub_events' : [
+       {'title':'Not a club',
+        'location': 'Quiet Reading Room',
+        'description': 'reading cool books',
+        'start': datetime(2017, 7, 3, 16), 
+        'end': datetime(2017, 7, 3, 18),
+        'rec_id': datetime(2017,7,3,15)
+        },
+    ],
+    },
+
+    {
+    "visibility": "olin",
+    'title':'Newsch Celebration',
+    'location': 'Library',
+    'description': 'Doing cool newsch things',
+    'start': datetime(2017, 6, 21, 15),
+    'end': datetime(2017, 6, 21, 16),
+    'end_recurrence' : datetime(2017, 7, 12,0),
+    "labels": ["summer", "library"],
+    'recurrence' : {
+        'frequency' : 'WEEKLY',
+        'interval' : '1',
+        'count' : '4',
+        'by_day' : "WE"
+        }
+    },
+    {
+    "visibility" : "olin",
     "title": "Bowling!",
     "start": datetime(2017, 6, 27, 17, 0),
     "end": datetime(2017, 6, 27, 19, 0),
