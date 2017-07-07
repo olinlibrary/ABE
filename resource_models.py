@@ -55,7 +55,7 @@ class EventApi(Resource):
             if 'start' in query_dict:
                 start = datetime.strptime(query_dict['start'], '%Y-%m-%d')
             else:
-                start = datetime(2017,7,1)
+                start = datetime(2017,6,1)
             if 'end' in query_dict:
                 end = datetime.strptime(query_dict['end'], '%Y-%m-%d')
             else:

@@ -322,11 +322,15 @@ def sub_event_to_full(sub_event, event):
     recurring_def_fields = ["end_recurrence", "recurrence", "sub_events"]
     sub_event_dict = mongo_to_dict(sub_event)
     for field in event:
-        if field not in sub_event_dict:
+        if field in sub_event_dict:
+            if event[field] == sub_event_dict[field]:
+                sub_event.update({ '$unset': { field: '1' } })
+        elif field not in sub_event_dict:
             if field not in recurring_def_fields:
-                sub_event_dict[field] = event[field]
-        elif event[field] == sub_event_dict[field]:
-            sub_event.update({ '$unset': { field: '1' } })
+                if field == 'id':
+                    sub_event_dict[field] = str(event[field])
+                else:
+                    sub_event_dict[field] = event[field]
             
     return(sub_event_dict)
 

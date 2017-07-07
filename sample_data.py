@@ -51,8 +51,8 @@ sample_events = [
         'end': datetime(2017, 7, 3, 18),
         'rec_id': datetime(2017,7,3,15)
         },
-        {'location': 'Quiet Reading Room',
-        'description': 'reading cool books',
+        {'location': 'LOOOOOOOD',
+        'description': 'reading NEWL BOOKS',
         'rec_id': datetime(2017,6,26,15)
         }
     ],
