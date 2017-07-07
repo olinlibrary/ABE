@@ -9,7 +9,7 @@ from bson import json_util, objectid
 from datetime import datetime, timedelta
 from dateutil.rrule import rrule, MONTHLY, WEEKLY, DAILY, YEARLY
 from helpers import (
-    mongo_to_dict, request_to_dict, mongo_to_ics, event_query, get_to_event_search, 
+    mongo_to_dict, request_to_dict, mongo_to_ics, event_query, get_to_event_search,
     recurring_to_full, update_sub_event
     )
 from icalendar import Calendar
@@ -43,13 +43,15 @@ class EventApi(Resource):
             if not results:
                 abort(404)
 
-            if 'start' in query_dict: #when querying from full calendar
+            if 'start' in query_dict:
                 start = datetime.strptime(query_dict['start'], '%Y-%m-%d')
-                end = datetime.strptime(query_dict['end'], '%Y-%m-%d')
-            else: # when querying for testing
+            else:
                 start = datetime(2017,7,1)
+            if 'end' in query_dict:
+                end = datetime.strptime(query_dict['end'], '%Y-%m-%d')
+            else:
                 end = datetime(2017, 7, 20)
-            
+
 
             events_list = []
             for event in results:
