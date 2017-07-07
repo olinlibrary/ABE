@@ -50,6 +50,7 @@ def mongo_to_dict(obj):
 
     return dict(return_data)
 
+
 def list_field_to_dict(list_field):
 
     return_data = []
@@ -116,6 +117,7 @@ def create_ics_event(event,recurrence=False):
     new_event.add('UID', uid)
     return(new_event)
 
+
 def create_ics_recurrence(new_event, recurrence):
     rec_ics_string = {}
     frequency = recurrence['frequency']
@@ -139,6 +141,7 @@ def create_ics_recurrence(new_event, recurrence):
 
     new_event.add('RRULE', rec_ics_string)
     return(new_event)
+
 
 def mongo_to_ics(events):
     #initialize calendar object
@@ -169,6 +172,7 @@ def mongo_to_ics(events):
     response = cal.to_ical()
     return response
 
+
 def ics_to_mongo(component):
     event_def = {}
     event_def['title'] = str(component.get('summary'))
@@ -185,11 +189,11 @@ def ics_to_mongo(component):
             rec_def['until'] = rrule.get('until')[0]
         if 'BYDAY' in rrule:
             rec_def['by_day'] = rrule.get('BYDAY')
-        if 'INTERVAL' not in rrule:
-            rec_def['interval'] = '2'
+        if 'INTERVAL' in rrule:
+            rec_def['interval'] = str(component.get('interval'))
         else:
-            #print(component.get('interval'))
-            rec_def['interval'] = '2' # str(component.get('interval'))
+            rec_def['interval'] = '1'
+        logging.debug("this is interval: ".format(rec_def['interval']))
         #rec_def['interval'] = '1' if 'INTERVAL' not in rrule else str(component.get('interval'))
         event_def['recurrence'] = rec_def
 
