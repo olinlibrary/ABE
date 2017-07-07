@@ -300,7 +300,7 @@ def placeholder_recurring_creation(instance, events_list, event, edit_recurrence
         return(events_list)
 
 
-def update_sub_event(received_data, result, first_creation=True, cur_sub_event):
+def update_sub_event(received_data, result, cur_sub_event, first_creation=True):
     rec_event = db.RecurringEventExc(**received_data)
 
     #record_id = db.Event.objects(__raw__={'_id': objectid.ObjectId(received_data['sid'])})
