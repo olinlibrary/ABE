@@ -36,11 +36,13 @@ class EventApi(Resource):
             if rec_id:
                 logging.debug('Sub_event requested: ' + rec_id)
                 result = placeholder_recurring_creation(rec_id, [], result)
-
+                if not result:
+                    abort(404)
+                return jsonify(result)
             if not result:
                 abort(404)
 
-            return jsonify([mongo_to_dict(res) for res in result])
+            return jsonify(mongo_to_dict(result))
         else:  # search database based on parameters
 
             query_dict = get_to_event_search(request)
