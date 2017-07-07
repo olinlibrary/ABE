@@ -15,6 +15,14 @@ app = Flask(__name__)
 CORS(app)
 api = Api(app)
 
+
+# add return representations
+@api.representation('application/json')
+def output_json(data, code, headers=None):
+    resp = jsonify(data, code)
+    resp.headers.extend(headers or {})
+    return resp
+
 # Route resources
 api.add_resource(EventApi, '/events/', methods=['GET', 'POST'], endpoint='event')
 api.add_resource(EventApi, '/events/<string:event_id>', methods=['GET', 'PUT', 'PATCH', 'DELETE'], endpoint='event_id')  # TODO: add route for string/gphycat links
