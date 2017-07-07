@@ -297,23 +297,19 @@ def placeholder_recurring_creation(instance, events_list, event):
 
 
 def update_sub_event(received_data, result):
-    if 'rec_id' in received_data:
-        rec_event = db.RecurringEventExc(**received_data)
+    rec_event = db.RecurringEventExc(**received_data)
 
-        #record_id = db.Event.objects(__raw__={'_id': objectid.ObjectId(received_data['sid'])})
+    #record_id = db.Event.objects(__raw__={'_id': objectid.ObjectId(received_data['sid'])})
 
-        cur_sub_event = db.Event.objects(__raw__ = { '$and' : [
-            {'_id': objectid.ObjectId(received_data['sid'])},
-            {'sub_events.rec_id' : received_data['rec_id']}]})
+    cur_sub_event = db.Event.objects(__raw__ = { '$and' : [
+        {'_id': objectid.ObjectId(received_data['sid'])},
+        {'sub_events.rec_id' : received_data['rec_id']}]})
 
-        if cur_sub_event:
-            cur_sub_event.update(set__sub_events__S=rec_event)
-        else:
-            result.update(add_to_set__sub_events=rec_event)
-
-        logging.debug("Updated reccurence with event with id {}".format(record_id))
+    if cur_sub_event:
+        cur_sub_event.update(set__sub_events__S=rec_event)
     else:
-        #record_id = db.Event.objects(id=event['id']).update(inc__id__S=event)  # Update record
-        logging.debug("Updated entry with id {}".format(record_id))
+        result.update(add_to_set__sub_events=rec_event)
+
+    logging.debug("Updated reccurence with event with id {}".format(record_id))
 
     return(record_id)

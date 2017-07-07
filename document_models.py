@@ -23,6 +23,8 @@ class RecurringEventExc(EmbeddedDocument):  # TODO: get a better name
     description = StringField()
     start = DateTimeField()
     end = DateTimeField()
+    url = URLField()
+    email = EmailField()
     rec_id = DateTimeField(required=True)
     deleted = BooleanField(default=False)
 
