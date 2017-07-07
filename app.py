@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Main flask app"""
-from flask import Flask, render_template
+from flask import Flask, render_template, jsonify
 from flask_restful import Api
 from flask_cors import CORS
 import os
@@ -19,7 +19,8 @@ api = Api(app)
 # add return representations
 @api.representation('application/json')
 def output_json(data, code, headers=None):
-    resp = jsonify(data, code)
+    resp = jsonify(data)
+    resp.status_code = code
     resp.headers.extend(headers or {})
     return resp
 
