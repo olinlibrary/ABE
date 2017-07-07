@@ -110,21 +110,27 @@ class EventApi(Resource):
     def put(self, event_id):
         """Modify individual event"""
         logging.debug('Event requested: ' + event_id)
-        result = db.Event.objects(id=event_id).first()
-        if not result:
-            abort(404)
+
 
         received_data = request_to_dict(request)
         logging.debug("Received PUT data: {}".format(received_data))
         try:
-            if 'sid' in received_data and received_data['sid'] is not None:
-                iso_to_dt = lambda s: datetime.strptime(s, "%Y-%m-%dT%H:%M:%SZ") - timedelta(hours=4)
-
-                if 'rec_id' in received_data and received_data['rec_id'] is not None:
-                    received_data['rec_id'] = dateutil.parser.parse(str(received_data['rec_id']))
-                    update_sub_event(received_data, result)
+            result = db.Event.objects(id=event_id).first()
+            if not result:
+                cur_sub_event = db.Event.objects(__raw__ = {'sub_events._id' : event_id})
+                if cur_sub_event:
+                    update_sub_event(received_data,result, cur_sub_event)
+                else:
+                    abort(404)
             else:
-                result.update(**received_data)
+                if 'sid' in received_data and received_data['sid'] is not None:
+                    iso_to_dt = lambda s: datetime.strptime(s, "%Y-%m-%dT%H:%M:%SZ") - timedelta(hours=4)
+
+                    if 'rec_id' in received_data and received_data['rec_id'] is not None:
+                        received_data['rec_id'] = dateutil.parser.parse(str(received_data['rec_id']))
+                        update_sub_event(received_data, result)
+                else:
+                    result.update(**received_data)
         except ValidationError as error:
             if 'application/json' in request.headers['Content-Type']:
                 return make_response(jsonify({

@@ -27,6 +27,7 @@ class RecurringEventExc(EmbeddedDocument):  # TODO: get a better name
     email = EmailField()
     rec_id = DateTimeField()
     deleted = BooleanField(default=False)
+    _id = ObjectId()
 
 
 class Event(Document):
