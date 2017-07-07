@@ -28,11 +28,17 @@ import database as db
 class EventApi(Resource):
     """API for interacting with events"""
 
-    def get(self, event_id=None):
+    def get(self, event_id=None, rec_id=None):
         """Retrieve events"""
         if event_id:  # use event id if present
             logging.debug('Event requested: ' + event_id)
             result = db.Event.objects(id=event_id).first()
+            if rec_id:
+                logging.debug('Sub_event requested: ' + rec_id)
+                result = placeholder_recurring_creation(rec_id, [], result, True)
+                if not result:
+                    abort(404)
+                return jsonify(result)
             if not result:
                 abort(404)
 
