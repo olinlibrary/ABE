@@ -35,24 +35,37 @@ sample_events = [
     'title':'Book Club',
     'location': 'Quiet Reading Room',
     'description': 'reading cool books',
+<<<<<<< HEAD
     'start': datetime(2017, 6, 1, 15), 
     'substitute_end': datetime(2017, 6, 1, 16),
     'end': datetime(2017, 7, 26),
+=======
+    'start': datetime(2017, 6, 19, 15),
+    'end': datetime(2017, 6, 19, 16),
+    'end_recurrence' : datetime(2017, 7, 31,0),
+>>>>>>> dev
     "labels": ["summer", "library"],
     'recurrence' : {
         'frequency' : 'WEEKLY',
         'interval' : '1',
+<<<<<<< HEAD
         'until' : datetime(2017, 7, 26),
         'by_day' : ["MO", 'TU']
+=======
+        'count' : '7',
+        'by_day' : ["MO"]
+>>>>>>> dev
         },
     'sub_events' : [
        {'title':'Not a club',
-        'location': 'Quiet Reading Room',
-        'description': 'reading cool books',
         'start': datetime(2017, 7, 3, 16), 
         'end': datetime(2017, 7, 3, 18),
         'rec_id': datetime(2017,7,3,15)
         },
+        {'location': 'LOOOOOOOD',
+        'description': 'reading NEWL BOOKS',
+        'rec_id': datetime(2017,6,26,15)
+        }
     ],
     },
 
@@ -70,6 +83,7 @@ sample_events = [
         'interval' : '1',
         'count' : '4',
         'by_day' : ["WE"]
+<<<<<<< HEAD
         },
     'sub_events' : [
        {'title':'no more newsch',
@@ -80,6 +94,9 @@ sample_events = [
         'rec_id': datetime(2017,7,19,15)
         },
     ],
+=======
+        }
+>>>>>>> dev
     },
 
     {
@@ -119,3 +136,13 @@ sample_labels = [
         "name": "potluck",
     }
 ]
+
+if __name__ == '__main__':  # import data
+    import logging
+    import database as db
+    logging.info("Inserting sample event data")
+    for event in sample_events:
+        db.Event(**event).save()
+    logging.info("Inserting sample label data")
+    for label in sample_labels:
+        db.Label(**label).save()

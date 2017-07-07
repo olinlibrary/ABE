@@ -42,7 +42,6 @@ In order to connect to a mongodb instance other than your localhost, you can cre
 | ------------- | ------------- |
 | GET | retrieve event with id 24 |
 | PUT | update event with id 24 |
-| PATCH | partially update event with id 24 |
 | DELETE | delete event with id 24 |
 
 ### abe.olin.build/events/ShortScarletFrog
@@ -51,7 +50,6 @@ In order to connect to a mongodb instance other than your localhost, you can cre
 | ------------- | ------------- |
 | GET | retrieve event with id "ShortScarletFrog" |
 | PUT | update event with id "ShortScarletFrog" |
-| PATCH | partially update event with id "ShortScarletFrog" |
 | DELETE | delete event with id "ShortScarletFrog" |
 
 ### abe.olin.build/labels/
@@ -67,5 +65,4 @@ In order to connect to a mongodb instance other than your localhost, you can cre
 | ------------- | ------------- |
 | GET | retrieve label with name "clubs" |
 | PUT | update label with name "clubs" |
-| PATCH | partially update label with name "clubs" |
 | DELETE | delete label with name "clubs" |
