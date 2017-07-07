@@ -40,7 +40,7 @@ class EventApi(Resource):
             if not result:
                 abort(404)
 
-            return jsonify(mongo_to_dict(result))
+            return jsonify([mongo_to_dict(result) for result in results])
         else:  # search database based on parameters
 
             query_dict = get_to_event_search(request)
