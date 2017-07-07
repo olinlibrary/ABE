@@ -35,7 +35,7 @@ class EventApi(Resource):
             result = db.Event.objects(id=event_id).first()
             if rec_id:
                 logging.debug('Sub_event requested: ' + rec_id)
-                result = placeholder_recurring_creation(rec_id, [], result)
+                result = placeholder_recurring_creation(rec_id, [], result, True)
                 if not result:
                     abort(404)
                 return jsonify(result)
