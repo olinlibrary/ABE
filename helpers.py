@@ -265,7 +265,7 @@ def recurring_to_full(event, events_list, start, end):
     return(events_list)
 
 def placeholder_recurring_creation(instance, events_list, event):
-    instance = dateutil.parser.parse(instance)
+    instance = dateutil.parser.parse(str(instance))
     try:
         event_end = datetime.strptime(str(event['end']), "%Y-%m-%d %H:%M:%S")
     except:
