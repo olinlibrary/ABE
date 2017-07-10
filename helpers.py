@@ -311,7 +311,7 @@ def update_sub_event(received_data, result, cur_sub_event=None, first_creation=T
             {'sub_events.rec_id' : received_data['rec_id']}]})
 
     if cur_sub_event:
-        cur_sub_event.update(set__sub_events__S=rec_event)
+        cur_sub_event.update(rec_event)
     else:
         result.update(add_to_set__sub_events=rec_event)
 
