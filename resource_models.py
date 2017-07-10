@@ -36,7 +36,7 @@ class EventApi(Resource):
             logging.debug('Event requested: ' + event_id)
             result = db.Event.objects(id=event_id).first()
             if not result:
-                cur_sub_event = db.Event.objects(__raw__ = {'sub_events.personal_id' : event_id})
+                cur_sub_event = db.Event.objects(__raw__ = {'sub_events._id' : objectid.ObjectId(event_id)})
                 if cur_sub_event:
                     return jsonify(sub_event_to_full(cur_sub_event,result))
                 else:
@@ -128,7 +128,7 @@ class EventApi(Resource):
         try:
             result = db.Event.objects(id=event_id).first()
             if not result:
-                cur_sub_event = db.Event.objects(__raw__ = {'sub_events.personal_id' : event_id})
+                cur_sub_event = db.Event.objects(__raw__ = {'sub_events._id' : objectid.ObjectId(event_id)})
                 if cur_sub_event:
                     update_sub_event(received_data,result, cur_sub_event, False)
                 else:

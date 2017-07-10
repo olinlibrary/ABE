@@ -28,7 +28,6 @@ def mongo_to_dict(obj):
         return None
 
     if isinstance(obj, Document):
-        logging.debug("trying to find _id")
         return_data.append(("id",str(obj.id)))
 
     for field_name in obj._fields:
@@ -323,7 +322,7 @@ def update_sub_event(received_data, result, cur_sub_event=None, first_creation=T
 def sub_event_to_full(sub_event, event):
     recurring_def_fields = ["end_recurrence", "recurrence", "sub_events"]
     sub_event_dict = mongo_to_dict(sub_event)
-    sub_event_dict["id"] = str(sub_event["personal_id"])
+    sub_event_dict["id"] = str(sub_event["id"])
     for field in event:
         if field in sub_event_dict:
             if event[field] == sub_event_dict[field]:
