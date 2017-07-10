@@ -173,14 +173,14 @@ def mongo_to_ics(events):
     return response
 
 
-def ics_to_mongo(component):
+def ics_to_mongo(component, labels):
     event_def = {}
     event_def['title'] = str(component.get('summary'))
     event_def['description'] = str(component.get('description'))
     event_def['location'] = str(component.get('location'))
     event_def['start'] = component.get('dtstart').dt
     event_def['end'] = component.get('dtend').dt
-    event_def['labels'] = ['summer']
+    event_def['labels'] = labels
     if component.get('rrule'):
         rrule = component.get('rrule')
         rec_def = {}

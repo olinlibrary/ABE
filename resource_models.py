@@ -298,10 +298,11 @@ class ICSFeed(Resource):
         url = request_to_dict(request)
         data = requests.get(url['url'].strip()).content.decode('utf-8')
         cal = Calendar.from_ical(data)
+        labels = url['labels']
 
         for component in cal.walk():
             if component.name == "VEVENT":
-                ics_to_mongo(component)
+                ics_to_mongo(component, labels)
 
     def put(self, ics_name):
         pass
