@@ -33,13 +33,19 @@ class EventApi(Resource):
         if event_id:  # use event id if present
             logging.debug('Event requested: ' + event_id)
             result = db.Event.objects(id=event_id).first()
-            if rec_id:
+            if not result:
+                cur_sub_event = db.Event.objects(__raw__ = {'sub_events._id' : event_id})
+                if cur_sub_event:
+                    return jsonify(sub_event_to_full(cur_sub_event,result))
+                else:
+                    abort(404)
+            elif rec_id:
                 logging.debug('Sub_event requested: ' + rec_id)
                 result = placeholder_recurring_creation(rec_id, [], result, True)
                 if not result:
                     abort(404)
                 return jsonify(result)
-            if not result:
+            else:
                 abort(404)
 
             return jsonify(mongo_to_dict(result))
