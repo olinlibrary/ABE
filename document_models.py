@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Document models for mongoengine"""
 from mongoengine import *
+from bson import ObjectId
 
 VISIBILITY = ['public', 'olin', 'students']
 
@@ -27,7 +28,7 @@ class RecurringEventExc(EmbeddedDocument):  # TODO: get a better name
     email = EmailField()
     rec_id = DateTimeField()
     deleted = BooleanField(default=False)
-    _id = ObjectId()
+    _id = ObjectIdField(default=ObjectId)
 
 
 class Event(Document):
