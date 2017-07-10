@@ -28,12 +28,14 @@ def mongo_to_dict(obj):
         return None
 
     if isinstance(obj, Document):
+        logging.debug("trying to find _id")
         return_data.append(("id",str(obj.id)))
 
     for field_name in obj._fields:
 
         if obj[field_name]:  # check if field is populated
             if field_name in ("id",):
+                logging.debug("trying to find another _id")
                 continue
 
             data = obj[field_name]
