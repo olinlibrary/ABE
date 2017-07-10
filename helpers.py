@@ -103,6 +103,7 @@ def create_ics_event(event,recurrence=False):
     new_event.add('summary', event['title'])
     new_event.add('location', event['location'])
     new_event.add('description', event['description'])
+    logging.debug("start ics: {}".format(event['start']))
     new_event.add('dtstart', event['start'])
     
     new_event.add('TRANSP', 'OPAQUE')
@@ -189,10 +190,13 @@ def ics_to_mongo(component):
         if 'BYDAY' in rrule:
             rec_def['by_day'] = rrule.get('BYDAY')
         if 'INTERVAL' in rrule:
-            rec_def['interval'] = str(component.get('interval'))
+            logging.debug("interval in rrule: {}".format(str(rrule.get('INTERVAL')[0])))
+            logging.debug("this is interval: ".format(rec_def))
+            rec_def['interval'] = str(rrule.get('INTERVAL')[0])
+
         else:
             rec_def['interval'] = '1'
-        logging.debug("this is interval: ".format(rec_def['interval']))
+        
         #rec_def['interval'] = '1' if 'INTERVAL' not in rrule else str(component.get('interval'))
         event_def['recurrence'] = rec_def
 
@@ -293,6 +297,7 @@ def recurring_to_full(event, events_list, start, end):
 
     return(events_list)
 
+
 def placeholder_recurring_creation(instance, events_list, event, edit_recurrence=False):
     instance = dateutil.parser.parse(str(instance))
     try:
@@ -345,6 +350,7 @@ def update_sub_event(received_data, result):
     logging.debug("Updated reccurence with event with id {}".format(result))
 
     return(result)
+
 
 def sub_event_to_full(sub_event, event):
     recurring_def_fields = ["end_recurrence", "recurrence", "sub_events"]
