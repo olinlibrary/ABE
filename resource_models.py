@@ -297,6 +297,7 @@ class ICSFeed(Resource):
         #reads outside ics feed
         url = request_to_dict(request)
         data = requests.get(url['url'].strip()).content.decode('utf-8')
+        print(url['url'])
         cal = Calendar.from_ical(data)
         labels = url['labels']
 
