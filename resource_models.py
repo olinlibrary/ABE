@@ -119,7 +119,7 @@ class EventApi(Resource):
             if not result:
                 cur_sub_event = db.Event.objects(__raw__ = {'sub_events._id' : event_id})
                 if cur_sub_event:
-                    update_sub_event(received_data,result, cur_sub_event)
+                    update_sub_event(received_data,result, cur_sub_event, False)
                 else:
                     abort(404)
             else:

@@ -37,7 +37,6 @@ def mongo_to_dict(obj):
                 continue
 
             data = obj[field_name]
-            logging.debug("data is {}".format(data))
             if isinstance(obj._fields[field_name], ListField):
                 return_data.append((field_name, list_field_to_dict(data)))
             elif isinstance(obj._fields[field_name], EmbeddedDocumentField):
@@ -300,7 +299,7 @@ def placeholder_recurring_creation(instance, events_list, event, edit_recurrence
         return(events_list)
 
 
-def update_sub_event(received_data, result, cur_sub_event, first_creation=True):
+def update_sub_event(received_data, result, cur_sub_event=None, first_creation=True):
     rec_event = db.RecurringEventExc(**received_data)
 
     #record_id = db.Event.objects(__raw__={'_id': objectid.ObjectId(received_data['sid'])})
