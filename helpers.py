@@ -311,7 +311,7 @@ def update_sub_event(received_data, result, cur_sub_event=None, first_creation=T
             {'sub_events.rec_id' : received_data['rec_id']}]})
 
     if cur_sub_event:
-        cur_sub_event.update(rec_event)
+        cur_sub_event.update(set__sub_events__S=rec_event)
     else:
         result.update(add_to_set__sub_events=rec_event)
 
@@ -326,7 +326,8 @@ def sub_event_to_full(sub_event, event):
     for field in event:
         if field in sub_event_dict:
             if event[field] == sub_event_dict[field]:
-                sub_event.update({ '$unset': { field: '1' } })
+                indexing = 'sub_events.'+field
+                event.update({ '$unset': { indexing: '1' } })
         elif field not in sub_event_dict:
             if field not in recurring_def_fields:
                 if field == 'id':
