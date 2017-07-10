@@ -299,21 +299,25 @@ def placeholder_recurring_creation(instance, events_list, event, edit_recurrence
     else:
         return(events_list)
 
+def unset_query_check(sub_event_dict, parent_event):
+    parent_event_dict = mongo_to_dict(parent_event)
+    for field in sub_event_dict:
+        if sub_event_dict[field] == parent_event_dict[field]:
+            new_key = 'unset__'+field
+            sub_event_dict[new_key] = sub_event_dict.pop(field)
+
+    return(sub_event_dict)
 
 def update_sub_event(received_data, result, cur_sub_event=None, first_creation=True):
-    rec_event = db.RecurringEventExc(**received_data)
-
     #record_id = db.Event.objects(__raw__={'_id': objectid.ObjectId(received_data['sid'])})
 
     if first_creation == True:
-        cur_sub_event = db.Event.objects(__raw__ = { '$and' : [
-            {'_id': objectid.ObjectId(received_data['sid'])},
-            {'sub_events.rec_id' : received_data['rec_id']}]})
-
-    if cur_sub_event:
-        cur_sub_event.update(set__sub_events__S=rec_event)
-    else:
+        sub_event_dict = unset_query_check(received_data, result)
+        rec_event = db.RecurringEventExc(**sub_event_dict)
         result.update(add_to_set__sub_events=rec_event)
+    else:
+        sub_event_dict = unset_query_check(received_data, cur_sub_event)
+        cur_sub_event.update(**sub_event_dict)
 
     logging.debug("Updated reccurence with event with id {}".format(result))
 
@@ -324,11 +328,7 @@ def sub_event_to_full(sub_event, event):
     sub_event_dict = mongo_to_dict(sub_event)
     sub_event_dict["id"] = str(sub_event["_id"])
     for field in event:
-        if field in sub_event_dict:
-            if event[field] == sub_event_dict[field]:
-                db.Event.update({'_id': objectid.ObjectId(event["id"]), 'sub_events._id': objectid.ObjectId(sub_event["_id"])}, 
-                    {'$unset': { field: '1'}})
-        elif field not in sub_event_dict:
+        if field not in sub_event_dict:
             if field not in recurring_def_fields:
                 if field == 'id':
                     sub_event_dict["sid"] = str(event[field])
