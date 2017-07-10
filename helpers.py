@@ -327,7 +327,7 @@ def sub_event_to_full(sub_event, event):
         if field in sub_event_dict:
             if event[field] == sub_event_dict[field]:
                 indexing = 'sub_events.'+field
-                event.update({ '$unset': { indexing: '1' } })
+                event.update({}, { '$unset': { indexing: '1' } })
         elif field not in sub_event_dict:
             if field not in recurring_def_fields:
                 if field == 'id':
