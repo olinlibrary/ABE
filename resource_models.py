@@ -31,7 +31,7 @@ class EventApi(Resource):
     def get(self, event_id=None, rec_id=None):
         """Retrieve events"""
         for i in db.Event.objects({}):
-            logging.debug("showing entire database {}".format(mongo_to_dict(i))
+            logging.debug("showing entire database {}".format(mongo_to_dict(i)))
         if event_id:  # use event id if present
             logging.debug('Event requested: ' + event_id)
             result = db.Event.objects(id=event_id).first()
