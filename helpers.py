@@ -190,13 +190,9 @@ def ics_to_mongo(component):
         if 'BYDAY' in rrule:
             rec_def['by_day'] = rrule.get('BYDAY')
         if 'INTERVAL' in rrule:
-            logging.debug("interval in rrule: {}".format(str(rrule.get('INTERVAL')[0])))
-            logging.debug("this is interval: ".format(rec_def))
             rec_def['interval'] = str(rrule.get('INTERVAL')[0])
-
         else:
             rec_def['interval'] = '1'
-        
         #rec_def['interval'] = '1' if 'INTERVAL' not in rrule else str(component.get('interval'))
         event_def['recurrence'] = rec_def
 
