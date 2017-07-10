@@ -38,14 +38,17 @@ class EventApi(Resource):
                 if cur_sub_event:
                     return jsonify(sub_event_to_full(cur_sub_event,result))
                 else:
+                    logging.debug("error possibility 1")
                     abort(404)
             elif rec_id:
                 logging.debug('Sub_event requested: ' + rec_id)
                 result = placeholder_recurring_creation(rec_id, [], result, True)
                 if not result:
+                    logging.debug("error possibility 2")
                     abort(404)
                 return jsonify(result)
             else:
+                logging.debug("error possibility 3")
                 abort(404)
 
             return jsonify(mongo_to_dict(result))
