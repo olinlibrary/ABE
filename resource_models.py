@@ -30,11 +30,12 @@ class EventApi(Resource):
 
     def get(self, event_id=None, rec_id=None):
         """Retrieve events"""
-        for i in db.Event.objects({}):
-            logging.debug("showing entire database {}".format(mongo_to_dict(i)))
+        #for i in db.Event.objects({}):
+            #logging.debug("showing entire database {}".format(mongo_to_dict(i)))
         if event_id:  # use event id if present
             logging.debug('Event requested: ' + event_id)
             result = db.Event.objects(id=event_id).first()
+            logging.debug('Event: {}'.format(event_id))
             if not result:
                 cur_sub_event = db.Event.objects(__raw__ = {'sub_events._id' : objectid.ObjectId(event_id)})
                 if cur_sub_event:
@@ -120,7 +121,7 @@ class EventApi(Resource):
 
     def put(self, event_id):
         """Modify individual event"""
-        logging.debug('Event requested: ' + event_id)
+        logging.debug('Editing event with id: ' + event_id)
 
 
         received_data = request_to_dict(request)
