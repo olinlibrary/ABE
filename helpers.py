@@ -63,21 +63,6 @@ def list_field_to_dict(list_field):
 
 
 def mongo_to_python_type(field,data):
-    '''
-    if isinstance(field, DateTimeField):
-        return str(data.isoformat())
-    elif isinstance(field, ComplexDateTimeField):
-        return field.to_python(data).isoformat()
-    elif isinstance(field, StringField):
-        return str(data)
-    elif isinstance(field, FloatField):
-        return float(data)
-    elif isinstance(field, IntField):
-        return int(data)
-    elif isinstance(field, BooleanField):
-        return bool(data)
-    el
-    '''
     if isinstance(field, ObjectIdField):
         return str(data)
     elif isinstance(field, DecimalField):
@@ -97,6 +82,8 @@ def request_to_dict(request):
 
 
 def create_ics_event(event,recurrence=False):
+    """creates ICS event definition
+    """
     new_event = Event()
     new_event.add('summary', event['title'])
     new_event.add('location', event['location'])
@@ -115,6 +102,8 @@ def create_ics_event(event,recurrence=False):
     return(new_event)
 
 def create_ics_recurrence(new_event, recurrence):
+    """creates the ICS rrule definition
+    """
     rec_ics_string = {}
     frequency = recurrence['frequency']
     interval = recurrence['interval']
@@ -139,6 +128,10 @@ def create_ics_recurrence(new_event, recurrence):
     return(new_event)
 
 def mongo_to_ics(events):
+    """creates the iCal based on the MongoDb database
+    and events submitted
+    """
+
     #initialize calendar object
     cal = Calendar()
     for event in events:
@@ -234,6 +227,8 @@ def multi_search(table, thing_to_search, fields):
 
 
 def recurring_to_full(event, events_list, start, end):
+    """Expands recurring events in MongoDb to multiple placeholder objects
+    """
     if 'sub_events' in event:
         for sub_event in event['sub_events']:
             if 'start' in sub_event:
@@ -272,6 +267,9 @@ def recurring_to_full(event, events_list, start, end):
     return(events_list)
 
 def placeholder_recurring_creation(instance, events_list, event, edit_recurrence=False):
+    """appends a dummy dictionary to a list if it's to display on the calendar
+    returns a single dummy dicitionary before editing of a single reucrring event
+    """
     instance = dateutil.parser.parse(str(instance))
     event_end = dateutil.parser.parse(str(event['end']))
     event_start = dateutil.parser.parse(str(event['start']))
@@ -299,6 +297,9 @@ def placeholder_recurring_creation(instance, events_list, event, edit_recurrence
         return(events_list)
 
 def duplicate_query_check(sub_event_dict, parent_event):
+    """checks whether a dictionary has the same field-value pair as a parent event
+    used to check for duplicate information in sub_events and their parent events
+    """
     parent_event_dict = mongo_to_dict(parent_event)
     fields_to_pop = []
     for field in sub_event_dict:
@@ -311,8 +312,8 @@ def duplicate_query_check(sub_event_dict, parent_event):
     return(sub_event_dict)
 
 def create_sub_event(received_data, parent_event):
-    #record_id = db.Event.objects(__raw__={'_id': objectid.ObjectId(received_data['sid'])})
-
+    """creates an edited event in a recurring series for the first time
+    """
     sub_event_dict = duplicate_query_check(received_data, parent_event)
     rec_event = db.RecurringEventExc(**sub_event_dict)
     parent_event.update(add_to_set__sub_events=rec_event)
@@ -321,8 +322,8 @@ def create_sub_event(received_data, parent_event):
     return(rec_event)
 
 def update_sub_event(received_data, parent_event, sub_event_id):
-    #record_id = db.Event.objects(__raw__={'_id': objectid.ObjectId(received_data['sid'])})
-
+    """edits a sub_event that has already been created
+    """
     for sub_event in parent_event.sub_events:
         if sub_event["_id"] == sub_event_id:
             updated_sub_event_dict = create_new_sub_event_defintion(mongo_to_dict(sub_event), received_data, parent_event)
@@ -333,6 +334,9 @@ def update_sub_event(received_data, parent_event, sub_event_id):
     return(updated_sub_event)
 
 def sub_event_to_full(sub_event_dict, event):
+    """expands a sub_event definition to have all fields full_Calendar requires
+    uses its parent definition to fill in the blanks
+    """
     recurring_def_fields = ["end_recurrence", "recurrence", "sub_events"]
     sub_event_dict["id"] = sub_event_dict.pop("_id")
     for field in event:
@@ -346,11 +350,16 @@ def sub_event_to_full(sub_event_dict, event):
     return(sub_event_dict)
 
 def access_sub_event(parent_event, sub_event_id):
+    """gets the sub_event from a parent_event and returns it
+    """
     for sub_event in parent_event['sub_events']:
         if sub_event['_id'] == str(sub_event_id):
             return(sub_event)
 
 def create_new_sub_event_defintion(sub_event, updates, parent_event):
+    """based on the hold sub_event definition and updates submitted
+    generates a new sub_event definition
+    """
     sub_event.update(updates)
     sub_event = duplicate_query_check(sub_event, parent_event)
     return(sub_event)
