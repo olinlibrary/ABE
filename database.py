@@ -4,6 +4,7 @@ from mongoengine import *
 from document_models import Event, Label, RecurringEventExc
 import os
 import logging
+logging.basicConfig(level=logging.DEBUG)
 
 config_present = os.path.isfile("mongo_config.py")
 env_present = os.environ.get('MONGO_URI')

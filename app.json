@@ -1,6 +1,8 @@
 {
   "name": "ABE",
   "scripts": {
+    "postdeploy": "python postdeploy.py",
+    "pr-predestroy": "python pr-predestroy.py"
   },
   "env": {
     "MONGO_URI": {
@@ -15,8 +17,11 @@
     "FLASK_DEBUG": {
       "description": "Disable Flask debug mode.",
       "value": "False",
+      "required":
+    },
+    "HEROKU_APP_NAME": {
       "required": true
-    }
+    },
   },
   "formation": {
   },
