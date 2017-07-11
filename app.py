@@ -3,6 +3,7 @@
 from flask import Flask, render_template
 from flask_restful import Api
 from flask_cors import CORS
+from flask_sslify import SSLify  # redirect to https
 import os
 
 import logging
@@ -13,6 +14,7 @@ from resource_models import EventApi, LabelApi, ICSFeed
 
 app = Flask(__name__)
 CORS(app)
+SSLify(app)
 api = Api(app)
 
 # Route resources
