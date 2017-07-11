@@ -4,10 +4,17 @@
   },
   "env": {
     "MONGO_URI": {
+      "description": "The connection URI for MongoDB.",
       "required": true
     },
     "DB_NAME": {
+      "description": "The name of the database to use.",
+      "value": "testing",
       "required": true
+    },
+    "FLASK_DEBUG": {
+      "description": "Disable Flask debug mode.",
+      "value": true
     }
   },
   "formation": {
