@@ -35,8 +35,9 @@ class EventApi(Resource):
         if event_id:  # use event id if present
             logging.debug('Event requested: ' + event_id)
             result = db.Event.objects(id=event_id).first()
-            logging.debug(mongo_to_dict(result))
+
             if not result:
+
                 cur_parent_event = db.Event.objects(__raw__ = {'sub_events._id' : objectid.ObjectId(event_id)}).first()
                 if cur_parent_event:
                     cur_sub_event = access_sub_event(mongo_to_dict(cur_parent_event),objectid.ObjectId(event_id))
@@ -52,11 +53,13 @@ class EventApi(Resource):
                     logging.debug("No dummy object created with rec_id")
                     abort(404)
                 return jsonify(result)
+            elif result:
+                return jsonify(mongo_to_dict(result))
             else:
                 logging.debug("No event or sub_event found. No rec_id sent.")
                 abort(404)
 
-            return jsonify(mongo_to_dict(result))
+            
         else:  # search database based on parameters
 
             query_dict = get_to_event_search(request)
