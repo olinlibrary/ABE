@@ -101,7 +101,6 @@ def create_ics_event(event,recurrence=False):
     new_event.add('summary', event['title'])
     new_event.add('location', event['location'])
     new_event.add('description', event['description'])
-    logging.debug(event)
     new_event.add('dtstart', event['start'])
     if event['end'] is not None:
         new_event.add('dtend', event['end'])
@@ -151,7 +150,8 @@ def mongo_to_ics(events):
 
         if event['sub_events']:
             for sub_event in event['sub_events']:
-                new_sub_event = create_ics_event(sub_event, True)
+                full_sub_event = sub_event_to_full(mongo_to_dict(sub_event), event)
+                new_sub_event = create_ics_event(full_sub_event, True)
                 cal.add_component(new_sub_event)
                 new_event.add('EXDATE', sub_event['rec_id'])
 
@@ -273,6 +273,9 @@ def recurring_to_full(event, events_list, start, end):
 
 def placeholder_recurring_creation(instance, events_list, event, edit_recurrence=False):
     instance = dateutil.parser.parse(str(instance))
+    event_end = dateutil.parser.parse(str(event['end']))
+    event_start = dateutil.parser.parse(str(event['start']))
+    '''
     try:
         event_end = datetime.strptime(str(event['end']), "%Y-%m-%d %H:%M:%S")
     except:
@@ -281,7 +284,7 @@ def placeholder_recurring_creation(instance, events_list, event, edit_recurrence
         event_start = datetime.strptime(str(event['start']), "%Y-%m-%d %H:%M:%S")
     except:
         event_start = datetime.strptime(str(event['start'])[:-7], "%Y-%m-%d %H:%M:%S")
-
+    '''
     repeat = False
     if 'sub_events' in event:
         for individual in event['sub_events']:
@@ -312,18 +315,32 @@ def unset_query_check(sub_event_dict, parent_event):
                 new_key = 'unset__'+field
                 sub_event_dict[new_key] = sub_event_dict.pop(field)
 
+    sub_event_dict.pop("rec_id", None)
     return(sub_event_dict)
 
-def update_sub_event(received_data, result, cur_sub_event=None, first_creation=True):
+def create_sub_event(received_data, parent_event):
     #record_id = db.Event.objects(__raw__={'_id': objectid.ObjectId(received_data['sid'])})
 
-    if first_creation == True:
-        sub_event_dict = unset_query_check(received_data, result)
-        rec_event = db.RecurringEventExc(**sub_event_dict)
-        result.update(add_to_set__sub_events=rec_event)
-    else:
-        sub_event_dict = unset_query_check(received_data, cur_sub_event)
-        cur_sub_event.update(**sub_event_dict)
+    sub_event_dict = unset_query_check(received_data, parent_event)
+    rec_event = db.RecurringEventExc(**sub_event_dict)
+    parent_event.update(add_to_set__sub_events=rec_event)
+    
+    logging.debug("Created reccurence with sub_event id {}".format(result))
+
+    return(parent_event)
+
+def update_sub_event(received_data, parent_event, sub_event_id):
+    #record_id = db.Event.objects(__raw__={'_id': objectid.ObjectId(received_data['sid'])})
+
+    sub_event_dict = unset_query_check(received_data, parent_event)
+    for sub_event in parent_event.sub_events:
+        logging.debug("sub_event before edit {}".format(mongo_to_dict(sub_event)))
+        logging.debug("edits to be made {}".format(sub_event_dict))
+        if sub_event["_id"] == sub_event_id:
+            rec_event = db.RecurringEventExc(**sub_event_dict)
+            parent_event.update(rec_event)
+        logging.debug("sub_event after edit {}".format(mongo_to_dict(sub_event)))
+    #parent_event.update(**sub_event_dict)
 
     logging.debug("Updated reccurence with sub_event id {}".format(result))
 

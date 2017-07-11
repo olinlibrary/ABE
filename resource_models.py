@@ -83,6 +83,7 @@ class EventApi(Resource):
                     events_list = recurring_to_full(event, events_list, start, end)
                 else:
                     events_list.append(mongo_to_dict(event))
+
             return jsonify(events_list)
 
     def post(self):
@@ -132,9 +133,10 @@ class EventApi(Resource):
         try:
             result = db.Event.objects(id=event_id).first()
             if not result:
-                cur_sub_event = db.Event.objects(__raw__ = {'sub_events._id' : objectid.ObjectId(event_id)})
-                if cur_sub_event:
-                    update_sub_event(received_data,result, cur_sub_event, False)
+                cur_parent_event = db.Event.objects(__raw__ = {'sub_events._id' : objectid.ObjectId(event_id)}).first()
+                if cur_parent_event:
+                    cur_sub_event = access_sub_event(mongo_to_dict(cur_parent_event),objectid.ObjectId(event_id))
+                    update_sub_event(received_data, cur_parent_event, objectid.ObjectId(event_id))
                 else:
                     abort(404)
             else:
@@ -143,7 +145,7 @@ class EventApi(Resource):
 
                     if 'rec_id' in received_data and received_data['rec_id'] is not None:
                         received_data['rec_id'] = dateutil.parser.parse(str(received_data['rec_id']))
-                        update_sub_event(received_data, result)
+                        create_sub_event(received_data, result)
                 else:
                     result.update(**received_data)
         except ValidationError as error:
