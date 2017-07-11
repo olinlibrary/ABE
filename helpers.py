@@ -239,11 +239,13 @@ def recurring_to_full(event, events_list, start, end):
             if 'start' in sub_event:
                 if sub_event['start'] <= end and sub_event['start'] >= start \
                     and sub_event['deleted']==False:
-                    events_list.append(sub_event_to_full(sub_event, event))
+                    logging.debug("trying to edit an event when it doesn't have a diff start date")
+                    events_list.append(sub_event_to_full(mongo_to_dict(sub_event), event))
             else:
                 if sub_event['rec_id'] <= end and sub_event['rec_id'] >= start \
                     and sub_event['deleted']==False:
-                    events_list.append(sub_event_to_full(sub_event, event))
+                    logging.debug("event when it has a diff start date")
+                    events_list.append(sub_event_to_full(mongo_to_dict(sub_event), event))
 
     rec_type_list = ['YEARLY', 'MONTHLY', 'WEEKLY', 'DAILY']
 
@@ -302,9 +304,10 @@ def placeholder_recurring_creation(instance, events_list, event, edit_recurrence
 def unset_query_check(sub_event_dict, parent_event):
     parent_event_dict = mongo_to_dict(parent_event)
     for field in sub_event_dict:
-        if sub_event_dict[field] == parent_event_dict[field]:
-            new_key = 'unset__'+field
-            sub_event_dict[new_key] = sub_event_dict.pop(field)
+        if field in parent_event_dict:
+            if sub_event_dict[field] == parent_event_dict[field]:
+                new_key = 'unset__'+field
+                sub_event_dict[new_key] = sub_event_dict.pop(field)
 
     return(sub_event_dict)
 
@@ -323,10 +326,12 @@ def update_sub_event(received_data, result, cur_sub_event=None, first_creation=T
 
     return(result)
 
-def sub_event_to_full(sub_event, event):
+def sub_event_to_full(sub_event_dict, event):
     recurring_def_fields = ["end_recurrence", "recurrence", "sub_events"]
-    sub_event_dict = mongo_to_dict(sub_event)
-    sub_event_dict["id"] = str(sub_event["_id"])
+    #sub_event_dict = mongo_to_dict(sub_event)
+    logging.debug("sub_event in dict: {}".format(sub_event_dict))
+    sub_event_dict["id"] = sub_event_dict.pop("_id")
+    logging.debug("sub_event in dict: {}".format(sub_event_dict))
     for field in event:
         if field not in sub_event_dict:
             if field not in recurring_def_fields:
@@ -337,4 +342,8 @@ def sub_event_to_full(sub_event, event):
             
     return(sub_event_dict)
 
+def access_sub_event(parent_event, sub_event_id):
+    for sub_event in parent_event['sub_events']:
+        if sub_event['_id'] == str(sub_event_id):
+            return(sub_event)
 

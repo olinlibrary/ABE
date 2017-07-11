@@ -37,9 +37,11 @@ class EventApi(Resource):
             result = db.Event.objects(id=event_id).first()
             logging.debug('Event: {}'.format(event_id))
             if not result:
-                cur_sub_event = db.Event.objects(__raw__ = {'sub_events._id' : objectid.ObjectId(event_id)})
-                if cur_sub_event:
-                    return jsonify(sub_event_to_full(cur_sub_event,result))
+                cur_parent_event = db.Event.objects(__raw__ = {'sub_events._id' : objectid.ObjectId(event_id)}).first()
+                if cur_parent_event:
+                    cur_sub_event = access_sub_event(mongo_to_dict(cur_parent_event),objectid.ObjectId(event_id))
+                    logging.debug("cur_sub_event: {}".format(cur_sub_event))
+                    return jsonify(sub_event_to_full(cur_sub_event,cur_parent_event))
                 else:
                     logging.debug("error possibility 1")
                     abort(404)
