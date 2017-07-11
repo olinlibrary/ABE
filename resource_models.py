@@ -35,7 +35,6 @@ class EventApi(Resource):
         if event_id:  # use event id if present
             logging.debug('Event requested: ' + event_id)
             result = db.Event.objects(id=event_id).first()
-            logging.debug('Event: {}'.format(event_id))
             if not result:
                 cur_parent_event = db.Event.objects(__raw__ = {'sub_events._id' : objectid.ObjectId(event_id)}).first()
                 if cur_parent_event:
@@ -43,17 +42,17 @@ class EventApi(Resource):
                     logging.debug("cur_sub_event: {}".format(cur_sub_event))
                     return jsonify(sub_event_to_full(cur_sub_event,cur_parent_event))
                 else:
-                    logging.debug("error possibility 1")
+                    logging.debug("No sub_event found")
                     abort(404)
             elif rec_id:
                 logging.debug('Sub_event requested: ' + rec_id)
                 result = placeholder_recurring_creation(rec_id, [], result, True)
                 if not result:
-                    logging.debug("error possibility 2")
+                    logging.debug("No dummy object created with rec_id")
                     abort(404)
                 return jsonify(result)
             else:
-                logging.debug("error possibility 3")
+                logging.debug("No event or sub_event found. No rec_id sent.")
                 abort(404)
 
             return jsonify(mongo_to_dict(result))
@@ -92,6 +91,8 @@ class EventApi(Resource):
         logging.debug("Received POST data: {}".format(received_data))  # combines args and form
         try:
             new_event = db.Event(**received_data)
+            if new_event.labels == []:
+                new_event.labels = ['unlabeled']
             new_event.save()
         except ValidationError as error:
             if request.headers['Content-Type'] == 'application/json':

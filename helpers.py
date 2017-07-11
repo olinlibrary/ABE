@@ -34,7 +34,6 @@ def mongo_to_dict(obj):
 
         if obj[field_name]:  # check if field is populated
             if field_name in ("id",):
-                logging.debug("trying to find another _id")
                 continue
 
             data = obj[field_name]
@@ -102,6 +101,7 @@ def create_ics_event(event,recurrence=False):
     new_event.add('summary', event['title'])
     new_event.add('location', event['location'])
     new_event.add('description', event['description'])
+    logging.debug(event)
     new_event.add('dtstart', event['start'])
     if event['end'] is not None:
         new_event.add('dtend', event['end'])
@@ -239,15 +239,14 @@ def recurring_to_full(event, events_list, start, end):
             if 'start' in sub_event:
                 if sub_event['start'] <= end and sub_event['start'] >= start \
                     and sub_event['deleted']==False:
-                    logging.debug("trying to edit an event when it doesn't have a diff start date")
                     events_list.append(sub_event_to_full(mongo_to_dict(sub_event), event))
             else:
                 if sub_event['rec_id'] <= end and sub_event['rec_id'] >= start \
                     and sub_event['deleted']==False:
-                    logging.debug("event when it has a diff start date")
                     events_list.append(sub_event_to_full(mongo_to_dict(sub_event), event))
 
     rec_type_list = ['YEARLY', 'MONTHLY', 'WEEKLY', 'DAILY']
+    day_list = ['MO', 'TU', 'WE','TH','FR','SA','SU']
 
     recurrence = event.recurrence
 
@@ -255,13 +254,17 @@ def recurring_to_full(event, events_list, start, end):
     rInterval = int(recurrence['interval'])
     rCount = int(recurrence['count']) if 'count' in recurrence else None
     rUntil = recurrence['until'] if 'until' in recurrence else None
-    rByMonth = recurrence['BYMONTH'] if 'BYMONTH' in recurrence else None
-    rByMonthDay = recurrence['BYMONTHDAY'] if 'BYMONTHDAY' in recurrence else None
-    rByDay = recurrence['BYDAY'] if 'BYDAY' in recurrence else None
-
+    rByMonth = recurrence['by_month'] if 'by_month' in recurrence else None
+    rByMonthDay = recurrence['by_month_day'] if 'by_month_day' in recurrence else None
+    if 'by_day' in recurrence:
+        rByDay = []
+        for i in recurrence['by_day']:
+            rByDay.append(day_list.index(i))
+    else:
+        rByDay = None
 
     rule_list = list(rrule(freq=rFrequency, count=rCount, interval=rInterval, until=rUntil, bymonth=rByMonth, \
-        bymonthday=rByMonthDay, byweekday=None, dtstart=event['start']))
+        bymonthday=rByMonthDay, byweekday=rByDay, dtstart=event['start']))
     for instance in rule_list:
         if instance >= start and instance < end:
             events_list = placeholder_recurring_creation(instance, events_list, event)
@@ -322,16 +325,13 @@ def update_sub_event(received_data, result, cur_sub_event=None, first_creation=T
         sub_event_dict = unset_query_check(received_data, cur_sub_event)
         cur_sub_event.update(**sub_event_dict)
 
-    logging.debug("Updated reccurence with event with id {}".format(result))
+    logging.debug("Updated reccurence with sub_event id {}".format(result))
 
     return(result)
 
 def sub_event_to_full(sub_event_dict, event):
     recurring_def_fields = ["end_recurrence", "recurrence", "sub_events"]
-    #sub_event_dict = mongo_to_dict(sub_event)
-    logging.debug("sub_event in dict: {}".format(sub_event_dict))
     sub_event_dict["id"] = sub_event_dict.pop("_id")
-    logging.debug("sub_event in dict: {}".format(sub_event_dict))
     for field in event:
         if field not in sub_event_dict:
             if field not in recurring_def_fields:
