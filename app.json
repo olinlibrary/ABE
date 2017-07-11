@@ -14,7 +14,7 @@
     },
     "FLASK_DEBUG": {
       "description": "Disable Flask debug mode.",
-      "value": true
+      "value": "False"
     }
   },
   "formation": {
