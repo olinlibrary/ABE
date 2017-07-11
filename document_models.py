@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Document models for mongoengine"""
 from mongoengine import *
+from bson import ObjectId
 
 VISIBILITY = ['public', 'olin', 'students']
 
@@ -25,8 +26,10 @@ class RecurringEventExc(EmbeddedDocument):  # TODO: get a better name
     end = DateTimeField()
     url = URLField()
     email = EmailField()
+    labels = ListField(StringField())
     rec_id = DateTimeField()
     deleted = BooleanField(default=False)
+    _id = ObjectIdField(default=ObjectId)
 
 
 class Event(Document):
@@ -46,7 +49,7 @@ class Event(Document):
     labels = ListField(StringField(), default=['unlabeled'])  # TODO: max length of label names?
 
     recurrence = EmbeddedDocumentField(RecurringEventDefinition)
-    sub_events = ListField(EmbeddedDocumentField(RecurringEventExc))
+    sub_events = EmbeddedDocumentListField(RecurringEventExc)
 
     meta = {'allow_inheritance': True}  # TODO: set indexes
 

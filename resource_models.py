@@ -30,19 +30,35 @@ class EventApi(Resource):
 
     def get(self, event_id=None, rec_id=None):
         """Retrieve events"""
+        
         if event_id:  # use event id if present
             logging.debug('Event requested: ' + event_id)
             result = db.Event.objects(id=event_id).first()
-            if rec_id:
+
+            if not result:
+
+                cur_parent_event = db.Event.objects(__raw__ = {'sub_events._id' : objectid.ObjectId(event_id)}).first()
+                if cur_parent_event:
+                    cur_sub_event = access_sub_event(mongo_to_dict(cur_parent_event),objectid.ObjectId(event_id))
+                    logging.debug("cur_sub_event: {}".format(cur_sub_event))
+                    return jsonify(sub_event_to_full(cur_sub_event,cur_parent_event))
+                else:
+                    logging.debug("No sub_event found")
+                    abort(404)
+            elif rec_id:
                 logging.debug('Sub_event requested: ' + rec_id)
                 result = placeholder_recurring_creation(rec_id, [], result, True)
                 if not result:
+                    logging.debug("No dummy object created with rec_id")
                     abort(404)
                 return jsonify(result)
-            if not result:
+            elif result:
+                return jsonify(mongo_to_dict(result))
+            else:
+                logging.debug("No event or sub_event found. No rec_id sent.")
                 abort(404)
 
-            return jsonify(mongo_to_dict(result))
+            
         else:  # search database based on parameters
 
             query_dict = get_to_event_search(request)
@@ -70,6 +86,7 @@ class EventApi(Resource):
                     events_list = recurring_to_full(event, events_list, start, end)
                 else:
                     events_list.append(mongo_to_dict(event))
+
             return jsonify(events_list)
 
     def post(self):
@@ -78,6 +95,8 @@ class EventApi(Resource):
         logging.debug("Received POST data: {}".format(received_data))  # combines args and form
         try:
             new_event = db.Event(**received_data)
+            if new_event.labels == []:
+                new_event.labels = ['unlabeled']
             new_event.save()
         except ValidationError as error:
             if request.headers['Content-Type'] == 'application/json':
@@ -109,22 +128,29 @@ class EventApi(Resource):
 
     def put(self, event_id):
         """Modify individual event"""
-        logging.debug('Event requested: ' + event_id)
-        result = db.Event.objects(id=event_id).first()
-        if not result:
-            abort(404)
+        logging.debug('Editing event with id: ' + event_id)
+
 
         received_data = request_to_dict(request)
         logging.debug("Received PUT data: {}".format(received_data))
         try:
-            if 'sid' in received_data and received_data['sid'] is not None:
-                iso_to_dt = lambda s: datetime.strptime(s, "%Y-%m-%dT%H:%M:%SZ") - timedelta(hours=4)
-
-                if 'rec_id' in received_data and received_data['rec_id'] is not None:
-                    received_data['rec_id'] = dateutil.parser.parse(str(received_data['rec_id']))
-                    update_sub_event(received_data, result)
+            result = db.Event.objects(id=event_id).first()
+            if not result:
+                cur_parent_event = db.Event.objects(__raw__ = {'sub_events._id' : objectid.ObjectId(event_id)}).first()
+                if cur_parent_event:
+                    cur_sub_event = access_sub_event(mongo_to_dict(cur_parent_event),objectid.ObjectId(event_id))
+                    result = update_sub_event(received_data, cur_parent_event, objectid.ObjectId(event_id))
+                else:
+                    abort(404)
             else:
-                result.update(**received_data)
+                if 'sid' in received_data and received_data['sid'] is not None:
+                    iso_to_dt = lambda s: datetime.strptime(s, "%Y-%m-%dT%H:%M:%SZ") - timedelta(hours=4)
+
+                    if 'rec_id' in received_data and received_data['rec_id'] is not None:
+                        received_data['rec_id'] = dateutil.parser.parse(str(received_data['rec_id']))
+                        result = create_sub_event(received_data, result)
+                else:
+                    result.update(**received_data)
         except ValidationError as error:
             if 'application/json' in request.headers['Content-Type']:
                 return make_response(jsonify({
