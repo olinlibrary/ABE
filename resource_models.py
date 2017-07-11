@@ -35,6 +35,7 @@ class EventApi(Resource):
         if event_id:  # use event id if present
             logging.debug('Event requested: ' + event_id)
             result = db.Event.objects(id=event_id).first()
+            logging.debug(mongo_to_dict(result))
             if not result:
                 cur_parent_event = db.Event.objects(__raw__ = {'sub_events._id' : objectid.ObjectId(event_id)}).first()
                 if cur_parent_event:
@@ -136,7 +137,7 @@ class EventApi(Resource):
                 cur_parent_event = db.Event.objects(__raw__ = {'sub_events._id' : objectid.ObjectId(event_id)}).first()
                 if cur_parent_event:
                     cur_sub_event = access_sub_event(mongo_to_dict(cur_parent_event),objectid.ObjectId(event_id))
-                    update_sub_event(received_data, cur_parent_event, objectid.ObjectId(event_id))
+                    result = update_sub_event(received_data, cur_parent_event, objectid.ObjectId(event_id))
                 else:
                     abort(404)
             else:
@@ -145,7 +146,7 @@ class EventApi(Resource):
 
                     if 'rec_id' in received_data and received_data['rec_id'] is not None:
                         received_data['rec_id'] = dateutil.parser.parse(str(received_data['rec_id']))
-                        create_sub_event(received_data, result)
+                        result = create_sub_event(received_data, result)
                 else:
                     result.update(**received_data)
         except ValidationError as error:
