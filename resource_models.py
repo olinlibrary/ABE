@@ -10,10 +10,11 @@ from bson import json_util, objectid
 from datetime import datetime, timedelta
 from dateutil.rrule import rrule, MONTHLY, WEEKLY, DAILY, YEARLY
 from helpers import (
-    mongo_to_dict, request_to_dict, mongo_to_ics, event_query, get_to_event_search,
-    recurring_to_full, update_sub_event
+    mongo_to_dict, request_to_dict, mongo_to_ics, event_query, get_to_event_search, 
+    recurring_to_full, update_sub_event, ics_to_mongo
     )
 from icalendar import Calendar
+import isodate
 
 from helpers import *
 
@@ -57,17 +58,17 @@ class EventApi(Resource):
         else:  # search database based on parameters
             query_dict = get_to_event_search(request)
             query = event_query(query_dict)
-            results = db.Event.objects(**query)
-            logging.debug('Found {} events for query'.format(len(results)))
+            results = db.Event.objects(__raw__ = query) #{'start': new Date('2017-06-14')})
+            logging.debug('found {} events for query'.format(len(results)))
             if not results:
                 return []
 
             if 'start' in query_dict:
-                start = datetime.strptime(query_dict['start'], '%Y-%m-%d')
+                start = query_dict['start']
             else:
                 start = datetime(2017,6,1)
             if 'end' in query_dict:
-                end = datetime.strptime(query_dict['end'], '%Y-%m-%d')
+                end = query_dict['end']
             else:
                 end = datetime(2017, 7, 20)
 
@@ -75,9 +76,11 @@ class EventApi(Resource):
             for event in results:
                 # checks for recurrent events
                 if 'recurrence' in event:
+                    
                     # checks for events from a recurrence that's been edited
                     events_list = recurring_to_full(event, events_list, start, end)
                 else:
+                    logging.debug(mongo_to_dict(event))
                     events_list.append(mongo_to_dict(event))
             return events_list
 
@@ -89,6 +92,8 @@ class EventApi(Resource):
             new_event = db.Event(**received_data)
             if new_event.labels == []:
                 new_event.labels = ['unlabeled']
+            if 'recurrence' in new_event:
+                new_event.recurrence_end = find_recurrence_end(new_event)
             new_event.save()
         except ValidationError as error:
             return {'error_type': 'validation',
@@ -118,6 +123,8 @@ class EventApi(Resource):
                         result = create_sub_event(received_data, result)
                 else:
                     result.update(**received_data)
+                    result.recurrence_end = find_recurrence_end(result)
+                    result.save()
         except ValidationError as error:
                 return {'error_type': 'validation',
                         'validation_errors': [str(err) for err in error.errors],
@@ -212,30 +219,27 @@ class LabelApi(Resource):
 class ICSFeed(Resource):
     """API for interacting with ics feeds"""
     def get(self, ics_name=None):
-        if ics_name:
-            # configure ics specs from fullcalendar to be mongoengine searchable
-            query = event_query(get_to_event_search(request))
-            results = db.Event.objects(**query)
-            response = mongo_to_ics(results)
-            cd = "attachment;filename="+ics_name+".ics"
-            return make_response(
-                response,
-                mimetype="text/calendar",
-                headers={"Content-Disposition": cd}
-            )
+        # configure ics specs from fullcalendar to be mongoengine searchable
+        query = event_query(get_to_event_search(request))
+        results = db.Event.objects(__raw__=query)
+        response = mongo_to_ics(results)
+        logging.debug("ics feed created")
+        cd = "attachment;filename=abe.ics"
+        return Response(response,
+                   mimetype="text/calendar",
+                   headers={"Content-Disposition": cd})
 
     def post(self):
         #reads outside ics feed
         url = request_to_dict(request)
         data = requests.get(url['url'].strip()).content.decode('utf-8')
+        print(url['url'])
         cal = Calendar.from_ical(data)
+        labels = url['labels']
 
         for component in cal.walk():
             if component.name == "VEVENT":
-                print(component.get('summary'))
-                print(component.get('dtstart'))
-                print(component.get('dtend'))
-                print(component.get('dtstamp'))
+                ics_to_mongo(component, labels)
 
     def put(self, ics_name):
         pass

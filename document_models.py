@@ -43,7 +43,7 @@ class Event(Document):
     start = DateTimeField(required=True)
     end = DateTimeField()
 
-    end_recurrence = DateTimeField()
+    recurrence_end = DateTimeField()
 
     visibility = StringField(default='olin', choices=VISIBILITY)
     labels = ListField(StringField(), default=['unlabeled'])  # TODO: max length of label names?

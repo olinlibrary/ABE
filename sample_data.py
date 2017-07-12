@@ -36,15 +36,16 @@ sample_events = [
     'title':'Book Club',
     'location': 'Quiet Reading Room',
     'description': 'reading cool books',
-    'start': datetime(2017, 6, 19, 15),
-    'end': datetime(2017, 6, 19, 16),
-    'end_recurrence' : datetime(2017, 7, 31,0),
+    'start': datetime(2017, 6, 1, 15), 
+    'end': datetime(2017, 6, 1, 16),
+    'recurrence_end': datetime(2017, 7, 26),
     "labels": ["summer", "library"],
     'recurrence' : {
         'frequency' : 'WEEKLY',
         'interval' : '1',
-        'count' : '7',
-        'by_day' : ["MO"]
+        'until' : datetime(2017, 7, 26),
+        'by_day' : ["MO", 'TU']
+
         },
     'sub_events' : [
        {'title':'Not a club',
@@ -68,17 +69,27 @@ sample_events = [
     'title':'Newsch Celebration',
     'location': 'Library',
     'description': 'Doing cool newsch things',
-    'start': datetime(2017, 6, 21, 15),
-    'end': datetime(2017, 6, 21, 16),
-    'end_recurrence' : datetime(2017, 7, 12,0),
+    'start': datetime(2017, 7, 5, 15),
+    'end': datetime(2017, 7, 5, 16),
+    'recurrence_end': datetime(2017, 7, 26),
     "labels": ["summer", "library"],
     'recurrence' : {
         'frequency' : 'WEEKLY',
         'interval' : '1',
         'count' : '4',
         'by_day' : ["WE"]
-        }
+        },
+    'sub_events' : [
+       {'title':'no more newsch',
+        'location': 'Loud Reading Room',
+        'description': 'reading lame books',
+        'start': datetime(2017, 7, 16, 16), 
+        'end': datetime(2017, 7, 16, 18),
+        'rec_id': datetime(2017,7,19,15)
+        },
+    ],
     },
+
     {
     "visibility" : "olin",
     "title": "Bowling!",
