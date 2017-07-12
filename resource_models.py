@@ -101,7 +101,7 @@ class EventApi(Resource):
             if new_event.labels == []:
                 new_event.labels = ['unlabeled']
             if 'recurrence' in new_event:
-                new_event.recurrence_end = find_recurrence_end(event)
+                new_event.recurrence_end = find_recurrence_end(new_event)
             new_event.save()
         except ValidationError as error:
             if request.headers['Content-Type'] == 'application/json':
