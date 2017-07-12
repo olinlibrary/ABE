@@ -315,15 +315,14 @@ class LabelApi(Resource):
 class ICSFeed(Resource):
 
     def get(self, ics_name=None):
-        if ics_name:
-            # configure ics specs from fullcalendar to be mongoengine searchable
-            query = event_query(get_to_event_search(request))
-            results = db.Event.objects(__raw__=query)
-            response = mongo_to_ics(results)
-            cd = "attachment;filename="+ics_name+".ics"
-            return Response(response,
-                       mimetype="text/calendar",
-                       headers={"Content-Disposition": cd})
+        # configure ics specs from fullcalendar to be mongoengine searchable
+        query = event_query(get_to_event_search(request))
+        results = db.Event.objects(__raw__=query)
+        response = mongo_to_ics(results)
+        cd = "attachment;filename=abe.ics"
+        return Response(response,
+                   mimetype="text/calendar",
+                   headers={"Content-Disposition": cd})
 
     def post(self):
         #reads outside ics feed

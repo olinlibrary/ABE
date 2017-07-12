@@ -89,14 +89,15 @@ def create_ics_event(event,recurrence=False):
     new_event.add('summary', event['title'])
     new_event.add('location', event['location'])
     new_event.add('description', event['description'])
-    logging.debug("start ics: {}".format(event['start']))
     new_event.add('dtstart', event['start'])
-    new_event.add('dtend', event['end'])
+    if 'end' in event:
+        new_event.add('dtend', event['end'])
     new_event.add('TRANSP', 'OPAQUE')
 
     if recurrence == False:
         uid = str(event['id'])
     else:
+        logging.debug('sub_event: {}'.format(event))
         uid = str(event['sid'])
         new_event.add('RECURRENCE-ID', event['rec_id'])
         
@@ -384,7 +385,6 @@ def sub_event_to_full(sub_event_dict, event):
     uses its parent definition to fill in the blanks
     """
     recurring_def_fields = ["end_recurrence", "recurrence", "sub_events"]
-    sub_event_dict["id"] = sub_event_dict.pop("_id")
     for field in event:
         if field not in sub_event_dict:
             if field not in recurring_def_fields:
@@ -392,7 +392,12 @@ def sub_event_to_full(sub_event_dict, event):
                     sub_event_dict["sid"] = str(event[field])
                 else:
                     sub_event_dict[field] = event[field]
-            
+    sub_event_dict["id"] = sub_event_dict.pop("_id")
+    sub_event_dict['start'] = dateutil.parser.parse(str(sub_event_dict['start']))
+    if 'end' in sub_event_dict:
+        sub_event_dict['end'] = dateutil.parser.parse(str(sub_event_dict['end']))
+    if 'rec_id' in sub_event_dict:
+        sub_event_dict['rec_id'] = dateutil.parser.parse(str(sub_event_dict['rec_id']))     
     return(sub_event_dict)
 
 def access_sub_event(parent_event, sub_event_id):
