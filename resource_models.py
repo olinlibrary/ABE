@@ -100,7 +100,7 @@ class EventApi(Resource):
             new_event = db.Event(**received_data)
             if new_event.labels == []:
                 new_event.labels = ['unlabeled']
-            if 'recurrence' in event:
+            if 'recurrence' in new_event:
                 new_event.recurrence_end = find_recurrence_end(event)
             new_event.save()
         except ValidationError as error:
