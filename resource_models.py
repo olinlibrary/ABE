@@ -106,7 +106,6 @@ class EventApi(Resource):
             if not result:
                 cur_parent_event = db.Event.objects(__raw__ = {'sub_events._id' : objectid.ObjectId(event_id)}).first()
                 if cur_parent_event:
-                    cur_sub_event = access_sub_event(mongo_to_dict(cur_parent_event),objectid.ObjectId(event_id))
                     result = update_sub_event(received_data, cur_parent_event, objectid.ObjectId(event_id))
                 else:
                     abort(404)
@@ -131,12 +130,16 @@ class EventApi(Resource):
         logging.debug('Event requested: ' + event_id)
         result = db.Event.objects(id=event_id).first()
         if not result:
+            cur_parent_event = db.Event.objects(__raw__ = {'sub_events._id' : objectid.ObjectId(event_id)}).first()
+                if cur_parent_event:
+                    received_data = {'deleted': True}
+                    result = update_sub_event(received_data, cur_parent_event, objectid.ObjectId(event_id))
             return "Event not found with identifier '{}'".format(event_id), 404
-
-        received_data = request_to_dict(request)
-        logging.debug("Received DELETE data: {}".format(received_data))
-        result.delete()
-        return mongo_to_dict(result)
+        else:
+            received_data = request_to_dict(request)
+            logging.debug("Received DELETE data: {}".format(received_data))
+            result.delete()
+            return mongo_to_dict(result)
 
 
 class LabelApi(Resource):
