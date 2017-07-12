@@ -97,7 +97,6 @@ def create_ics_event(event,recurrence=False):
     if recurrence == False:
         uid = str(event['id'])
     else:
-        logging.debug('sub_event: {}'.format(event))
         uid = str(event['sid'])
         new_event.add('RECURRENCE-ID', event['rec_id'])
         
@@ -250,9 +249,6 @@ def event_query(search_dict):
             query_rec_event.update(get_pattern(search_dict[key]))
 
     query = {'$or': [query_reg_event,query_rec_event]}
-    #query = {'$or': [{'end': {'$gte': dateutil.parser.parse('2017-6-1')}, 'start': {'$lte': dateutil.parser.parse('2017-7-20')}}, {'end_recurrence': {'$gte': dateutil.parser.parse('2017-6-1')}, 'start': {'$lte': dateutil.parser.parse('2017-7-20')}}]}
-    #query = {'$or': [{'end': {'$gte': '2017-6-24'}, 'start': {'$lte': '2017-8-5'}}, {'labels' : {'$in' : }}]}
-    logging.debug(query)
     return query
 
 
