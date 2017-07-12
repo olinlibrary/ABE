@@ -17,7 +17,7 @@
     "FLASK_DEBUG": {
       "description": "Disable Flask debug mode.",
       "value": "False",
-      "required":
+      "required": true
     },
     "HEROKU_APP_NAME": {
       "required": true
