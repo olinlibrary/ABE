@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """Sample data that can be added to the database"""
 from datetime import datetime
 
@@ -47,13 +48,13 @@ sample_events = [
         },
     'sub_events' : [
        {'title':'Not a club',
-        'start': datetime(2017, 7, 3, 16), 
+        'start': datetime(2017, 7, 3, 16),
         'end': datetime(2017, 7, 3, 18),
         'rec_id': datetime(2017,7,3,15)
         },
         {'location': 'LOOOOOOOD',
         'description': 'reading NEWL BOOKS',
-        'start': datetime(2017, 6, 26, 15), 
+        'start': datetime(2017, 6, 26, 15),
         'end': datetime(2017, 6, 26, 19),
         'rec_id': datetime(2017,6,26,15)
         }
@@ -114,12 +115,16 @@ sample_labels = [
     }
 ]
 
-if __name__ == '__main__':  # import data
+def load_data(db, event_data=sample_events, label_data=sample_labels):
     import logging
-    import database as db
+    logging.basicConfig(level=logging.DEBUG)
     logging.info("Inserting sample event data")
-    for event in sample_events:
+    for event in event_data:
         db.Event(**event).save()
     logging.info("Inserting sample label data")
-    for label in sample_labels:
+    for label in label_data:
         db.Label(**label).save()
+
+if __name__ == '__main__':  # import data
+    import database as db
+    load_data(db)
