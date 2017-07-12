@@ -273,7 +273,7 @@ def recurring_to_full(event, events_list, start, end):
         for sub_event in event['sub_events']:
             if 'start' in sub_event:
                 if sub_event['start'] <= end and sub_event['start'] >= start \
-                    and sub_event['deleted']==False:
+                    and sub_event['deleted']=='False':
                     events_list.append(sub_event_to_full(mongo_to_dict(sub_event), event))
 
     rule_list = instance_creation(event)
@@ -321,8 +321,8 @@ def placeholder_recurring_creation(instance, events_list, event, edit_recurrence
     repeat = False
     if 'sub_events' in event:
         for individual in event['sub_events']:
-            indiv = datetime.strptime(str(individual['rec_id']), "%Y-%m-%d %H:%M:%S")
-            if instance == indiv or individual['deleted']==True:
+            indiv = dateutil.parser.parse(str(individual['rec_id']))
+            if instance == indiv: # or (instance == indiv and individual['deleted']=='True'):
                 repeat = True
 
     if repeat == False:
@@ -336,10 +336,10 @@ def placeholder_recurring_creation(instance, events_list, event, edit_recurrence
         fake_object['labels'] = event['labels']
 
         events_list.append(fake_object) #json.dumps(fake_object, default=json_util.default))
-    if edit_recurrence == True:
-        return(fake_object)
-    else:
-        return(events_list)
+        if edit_recurrence == True:
+            fake_object['rec_id'] = isodate.parse_datetime(instance.isoformat())
+            return(fake_object)
+    return(events_list)
 
 def duplicate_query_check(sub_event_dict, parent_event):
     """checks whether a dictionary has the same field-value pair as a parent event
@@ -360,6 +360,7 @@ def create_sub_event(received_data, parent_event):
     """creates an edited event in a recurring series for the first time
     """
     sub_event_dict = duplicate_query_check(received_data, parent_event)
+    logging.debug("sub_event_dict {}".format(sub_event_dict))
     rec_event = db.RecurringEventExc(**sub_event_dict)
     parent_event.update(add_to_set__sub_events=rec_event)
 

@@ -40,7 +40,6 @@ class EventApi(Resource):
                 cur_parent_event = db.Event.objects(__raw__ = {'sub_events._id' : objectid.ObjectId(event_id)}).first()
                 if cur_parent_event:
                     cur_sub_event = access_sub_event(mongo_to_dict(cur_parent_event),objectid.ObjectId(event_id))
-                    logging.debug("cur_sub_event: {}".format(cur_sub_event))
                     return sub_event_to_full(cur_sub_event,cur_parent_event)
                 else:
                     logging.debug("No sub_event found")
@@ -74,13 +73,12 @@ class EventApi(Resource):
 
             events_list = []
             for event in results:
+                logging.debug("event: {}".format(mongo_to_dict(event)))
                 # checks for recurrent events
                 if 'recurrence' in event:
-                    
                     # checks for events from a recurrence that's been edited
                     events_list = recurring_to_full(event, events_list, start, end)
                 else:
-                    logging.debug(mongo_to_dict(event))
                     events_list.append(mongo_to_dict(event))
             return events_list
 
@@ -132,16 +130,21 @@ class EventApi(Resource):
         else:  # return success
             return mongo_to_dict(result)
 
-    def delete(self, event_id):
+    def delete(self, event_id, rec_id=None):
         """Delete individual event"""
         logging.debug('Event requested: ' + event_id)
         result = db.Event.objects(id=event_id).first()
         if not result:
             cur_parent_event = db.Event.objects(__raw__ = {'sub_events._id' : objectid.ObjectId(event_id)}).first()
-                if cur_parent_event:
-                    received_data = {'deleted': True}
-                    result = update_sub_event(received_data, cur_parent_event, objectid.ObjectId(event_id))
-            return "Event not found with identifier '{}'".format(event_id), 404
+            if cur_parent_event:
+                received_data = {'deleted': 'True'}
+                result = update_sub_event(received_data, cur_parent_event, objectid.ObjectId(event_id))
+                logging.debug("Edited sub_event deleted")
+        elif rec_id:
+            sub_event_dummy = placeholder_recurring_creation(rec_id, [], result, True)
+            sub_event_dummy['deleted'] = 'True'
+            create_sub_event(sub_event_dummy, result)
+            logging.debug("Deleted sub_event for the first time")
         else:
             received_data = request_to_dict(request)
             logging.debug("Received DELETE data: {}".format(received_data))
