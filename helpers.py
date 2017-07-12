@@ -197,11 +197,14 @@ def get_to_event_search(request):
         'students': ['public', 'olin', 'students'],
     }
     split_into_list = lambda a: a if isinstance(a, list) else a.split(',')
+    ensure_date_time = lambda a: dateutil.parser.parse(a) if not isinstance(a, datetime) else a
     preprocessing = {
         'labels': split_into_list,  # split labels on commas if not already list
         'labels_and': split_into_list,
         'labels_not': split_into_list,
         'visibility': lambda a: visibilities.get(a, None),  # search based on list
+        'start': ensure_date_time,
+        'end': ensure_date_time,
     }
 
     search_dict = req_dict
@@ -219,21 +222,21 @@ def event_query(search_dict):
     #the key in params dicts maps to the keys in the request given
     #the keys in the lambda functions map to the keys in MongoDb
     params_reg_event = {
-        'start': lambda a: {'end' : {'gte': a}},
-        'end': lambda a: {'start' : {'lte': a}},
-        'labels': lambda a: {'labels' : {'in': a}},
-        'labels_and': lambda a: {'labels' : {'all': a}},
-        'labels_not': lambda a: {'labels' :{'nin': a}},
-        'visibility': lambda a: {'visibility' : {'in': a}},
+        'start': lambda a: {'end' : {'$gte': a}},
+        'end': lambda a: {'start' : {'$lte': a}},
+        'labels': lambda a: {'labels' : {'$in': a}},
+        'labels_and': lambda a: {'labels' : {'$all': a}},
+        'labels_not': lambda a: {'labels' :{'$nin': a}},
+        'visibility': lambda a: {'visibility' : {'$in': a}},
     }
 
     params_recu_event = {
-        'start': lambda a: {'end_recurrence' : {'gte': a}},
-        'end': lambda a: {'start' : {'lte': a}},
-        'labels': lambda a: {'labels' : {'in': a}},
-        'labels_and': lambda a: {'labels' : {'all': a}},
-        'labels_not': lambda a: {'labels' :{'nin': a}},
-        'visibility': lambda a: {'visibility' : {'in': a}},
+        'start': lambda a: {'end_recurrence' : {'$gte': a}},
+        'end': lambda a: {'start' : {'$lte': a}},
+        'labels': lambda a: {'labels' : {'$in': a}},
+        'labels_and': lambda a: {'labels' : {'$all': a}},
+        'labels_not': lambda a: {'labels' :{'$nin': a}},
+        'visibility': lambda a: {'visibility' : {'$in': a}},
     }
 
     query_reg_event = {}    
@@ -247,6 +250,9 @@ def event_query(search_dict):
             query_rec_event.update(get_pattern(search_dict[key]))
 
     query = {'$or': [query_reg_event,query_rec_event]}
+    #query = {'$or': [{'end': {'$gte': dateutil.parser.parse('2017-6-1')}, 'start': {'$lte': dateutil.parser.parse('2017-7-20')}}, {'end_recurrence': {'$gte': dateutil.parser.parse('2017-6-1')}, 'start': {'$lte': dateutil.parser.parse('2017-7-20')}}]}
+    #query = {'$or': [{'end': {'$gte': '2017-6-24'}, 'start': {'$lte': '2017-8-5'}}, {'labels' : {'$in' : }}]}
+    logging.debug(query)
     return query
 
 

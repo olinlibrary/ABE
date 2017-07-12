@@ -14,6 +14,7 @@ from helpers import (
     recurring_to_full, update_sub_event, ics_to_mongo
     )
 from icalendar import Calendar
+import isodate
 
 from helpers import *
 
@@ -63,7 +64,8 @@ class EventApi(Resource):
 
             query_dict = get_to_event_search(request)
             query = event_query(query_dict)
-            results = db.Event.objects(__raw__ = query)
+            results = db.Event.objects(__raw__ = query) #{'start': new Date('2017-06-14')})
+            logging.debug(mongo_to_dict(res) for res in results)
             logging.debug('found {} events for query'.format(len(results)))
             if not results:
                 abort(404)
