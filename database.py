@@ -4,6 +4,7 @@ from mongoengine import *
 from document_models import Event, Label, RecurringEventExc
 import os
 import logging
+logging.basicConfig(level=logging.DEBUG)
 
 config_present = os.path.isfile("mongo_config.py")
 env_present = os.environ.get('MONGO_URI')
@@ -14,7 +15,7 @@ else:
     uri = None
     db_name = "no-config"
 mongo_uri = os.getenv('MONGO_URI', uri) if not use_local else None
-mongo_db_name = os.getenv('DB_NAME', db_name)
+mongo_db_name = os.getenv('DB_NAME', os.getenv('HEROKU_APP_NAME', db_name))
 
 connect(mongo_db_name, host=mongo_uri)
 
