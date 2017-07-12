@@ -91,7 +91,7 @@ def create_ics_event(event,recurrence=False):
     new_event.add('description', event['description'])
     logging.debug("start ics: {}".format(event['start']))
     new_event.add('dtstart', event['start'])
-    
+    new_event.add('dtend', event['end'])
     new_event.add('TRANSP', 'OPAQUE')
 
     if recurrence == False:
@@ -144,12 +144,7 @@ def mongo_to_ics(events):
         recurrence = event['recurrence']
         if recurrence:
             new_event = create_ics_recurrence(new_event, recurrence)
-            if event['substitute_end'] is not None:
-                new_event.add('dtend', event['substitute_end'])
-        else:
-            if event['end'] is not None:
-                new_event.add('dtend', event['end'])
-
+            
         if event['sub_events']:
             for sub_event in event['sub_events']:
                 full_sub_event = sub_event_to_full(mongo_to_dict(sub_event), event)
@@ -217,20 +212,40 @@ def get_to_event_search(request):
 
 def event_query(search_dict):
     """Build mongo query for searching events based on query
-    By default FullCalendar sends 'start' and 'end' as ISO8601 date strings"""
-    params = {
-        'start': lambda a: {'end__gte': a},
-        'end': lambda a: {'start__lte': a},
-        'labels': lambda a: {'labels__in': a},
-        'labels_and': lambda a: {'labels__all': a},
-        'labels_not': lambda a: {'labels__nin': a},
-        'visibility': lambda a: {'visibility__in': a},
+    By default FullCalendar sends 'start' and 'end' as ISO8601 date strings
+    Has two queries: one for regular events and one for recurring events"""
+    
+    #the key in params dicts maps to the keys in the request given
+    #the keys in the lambda functions map to the keys in MongoDb
+    params_reg_event = {
+        'start': lambda a: {'end' : {'gte': a}},
+        'end': lambda a: {'start' : {'lte': a}},
+        'labels': lambda a: {'labels' : {'in': a}},
+        'labels_and': lambda a: {'labels' : {'all': a}},
+        'labels_not': lambda a: {'labels' :{'nin': a}},
+        'visibility': lambda a: {'visibility' : {'in': a}},
     }
 
-    query = {}
-    for key, get_pattern in params.items():
+    params_recu_event = {
+        'start': lambda a: {'end_recurrence' : {'gte': a}},
+        'end': lambda a: {'start' : {'lte': a}},
+        'labels': lambda a: {'labels' : {'in': a}},
+        'labels_and': lambda a: {'labels' : {'all': a}},
+        'labels_not': lambda a: {'labels' :{'nin': a}},
+        'visibility': lambda a: {'visibility' : {'in': a}},
+    }
+
+    query_reg_event = {}    
+    for key, get_pattern in params_reg_event.items():
         if key in search_dict.keys():
-            query.update(get_pattern(search_dict[key]))
+            query_reg_event.update(get_pattern(search_dict[key]))
+
+    query_rec_event = {}
+    for key, get_pattern in params_recu_event.items():
+        if key in search_dict.keys():
+            query_rec_event.update(get_pattern(search_dict[key]))
+
+    query = {'$or': [query_reg_event,query_rec_event]}
     return query
 
 
@@ -262,6 +277,15 @@ def recurring_to_full(event, events_list, start, end):
                     and sub_event['deleted']==False:
                     events_list.append(sub_event_to_full(mongo_to_dict(sub_event), event))
 
+    rule_list = instance_creation(event)
+    
+    for instance in rule_list:
+        if instance >= start and instance < end:
+            events_list = placeholder_recurring_creation(instance, events_list, event)
+
+    return(events_list)
+
+def instance_creation(event):
     rec_type_list = ['YEARLY', 'MONTHLY', 'WEEKLY', 'DAILY']
 
     day_list = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU']
@@ -284,12 +308,8 @@ def recurring_to_full(event, events_list, start, end):
 
     rule_list = list(rrule(freq=rFrequency, count=rCount, interval=rInterval, until=rUntil, bymonth=rByMonth, \
         bymonthday=rByMonthDay, byweekday=rByDay, dtstart=event['start']))
-    for instance in rule_list:
-        if instance >= start and instance < end:
-            events_list = placeholder_recurring_creation(instance, events_list, event)
 
-    return(events_list)
-
+    return(rule_list)
 
 def placeholder_recurring_creation(instance, events_list, event, edit_recurrence=False):
     """appends a dummy dictionary to a list if it's to display on the calendar
@@ -389,4 +409,9 @@ def create_new_sub_event_defintion(sub_event, updates, parent_event):
     sub_event.update(updates)
     sub_event = duplicate_query_check(sub_event, parent_event)
     return(sub_event)
+
+def find_recurrence_end(event):
+    rule_list = instance_creation(event)
+    return(rule_list[-1])
+
 

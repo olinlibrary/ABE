@@ -63,7 +63,7 @@ class EventApi(Resource):
 
             query_dict = get_to_event_search(request)
             query = event_query(query_dict)
-            results = db.Event.objects(**query)
+            results = db.Event.objects(__raw__ = query)
             logging.debug('found {} events for query'.format(len(results)))
             if not results:
                 abort(404)
@@ -82,9 +82,11 @@ class EventApi(Resource):
             for event in results:
                 # checks for recurrent events
                 if 'recurrence' in event:
+                    
                     # checks for events from a recurrence that's been edited
                     events_list = recurring_to_full(event, events_list, start, end)
                 else:
+                    logging.debug(mongo_to_dict(event))
                     events_list.append(mongo_to_dict(event))
 
             return jsonify(events_list)
@@ -97,6 +99,8 @@ class EventApi(Resource):
             new_event = db.Event(**received_data)
             if new_event.labels == []:
                 new_event.labels = ['unlabeled']
+            if 'recurrence' in event:
+                new_event.recurrence_end = find_recurrence_end(event)
             new_event.save()
         except ValidationError as error:
             if request.headers['Content-Type'] == 'application/json':
@@ -151,6 +155,8 @@ class EventApi(Resource):
                         result = create_sub_event(received_data, result)
                 else:
                     result.update(**received_data)
+                    result.recurrence_end = find_recurrence_end(result)
+                    result.save()
         except ValidationError as error:
             if 'application/json' in request.headers['Content-Type']:
                 return make_response(jsonify({
@@ -312,7 +318,7 @@ class ICSFeed(Resource):
         if ics_name:
             # configure ics specs from fullcalendar to be mongoengine searchable
             query = event_query(get_to_event_search(request))
-            results = db.Event.objects(**query)
+            results = db.Event.objects(__raw__=query)
             response = mongo_to_ics(results)
             cd = "attachment;filename="+ics_name+".ics"
             return Response(response,

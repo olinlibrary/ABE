@@ -36,8 +36,8 @@ sample_events = [
     'location': 'Quiet Reading Room',
     'description': 'reading cool books',
     'start': datetime(2017, 6, 1, 15), 
-    'substitute_end': datetime(2017, 6, 1, 16),
-    'end': datetime(2017, 7, 26),
+    'end': datetime(2017, 6, 1, 16),
+    'recurrence_end': datetime(2017, 7, 26),
     "labels": ["summer", "library"],
     'recurrence' : {
         'frequency' : 'WEEKLY',
@@ -67,8 +67,8 @@ sample_events = [
     'location': 'Library',
     'description': 'Doing cool newsch things',
     'start': datetime(2017, 7, 5, 15),
-    'substitute_end': datetime(2017, 7, 5, 16),
-    'end': datetime(2017, 7, 26),
+    'end': datetime(2017, 7, 5, 16),
+    'recurrence_end': datetime(2017, 7, 26),
     "labels": ["summer", "library"],
     'recurrence' : {
         'frequency' : 'WEEKLY',
