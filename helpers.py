@@ -312,9 +312,9 @@ def instance_creation(event):
             rByDay.append(day_list.index(i))
     else:
         rByDay = None
-
-    rule_list = list(rrule(freq=rFrequency, count=rCount, interval=rInterval, until=rUntil, bymonth=rByMonth, \
-        bymonthday=rByMonthDay, byweekday=rByDay, dtstart=event['start']))
+    ensure_date_time = lambda a: dateutil.parser.parse(a) if not isinstance(a, datetime) else a
+    rule_list = list(rrule(freq=rFrequency, count=rCount, interval=rInterval, until=ensure_date_time(rUntil), bymonth=rByMonth, \
+        bymonthday=rByMonthDay, byweekday=rByDay, dtstart=ensure_date_time(event['start'])))
 
     return(rule_list)
 
