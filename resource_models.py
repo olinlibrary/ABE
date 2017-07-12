@@ -65,17 +65,16 @@ class EventApi(Resource):
             query_dict = get_to_event_search(request)
             query = event_query(query_dict)
             results = db.Event.objects(__raw__ = query) #{'start': new Date('2017-06-14')})
-            logging.debug(mongo_to_dict(res) for res in results)
             logging.debug('found {} events for query'.format(len(results)))
             if not results:
                 abort(404)
 
             if 'start' in query_dict:
-                start = datetime.strptime(query_dict['start'], '%Y-%m-%d')
+                start = query_dict['start']
             else:
                 start = datetime(2017,6,1)
             if 'end' in query_dict:
-                end = datetime.strptime(query_dict['end'], '%Y-%m-%d')
+                end = query_dict['end']
             else:
                 end = datetime(2017, 7, 20)
 
@@ -321,6 +320,7 @@ class ICSFeed(Resource):
         query = event_query(get_to_event_search(request))
         results = db.Event.objects(__raw__=query)
         response = mongo_to_ics(results)
+        logging.debug("ics response {}".format(response))
         cd = "attachment;filename=abe.ics"
         return Response(response,
                    mimetype="text/calendar",
