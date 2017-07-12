@@ -11,8 +11,6 @@
     },
     "DB_NAME": {
       "description": "The name of the database to use.",
-      "value": "testing",
-      "required": true
     },
     "FLASK_DEBUG": {
       "description": "Disable Flask debug mode.",
