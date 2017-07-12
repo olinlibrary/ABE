@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Main flask app"""
-from flask import Flask, render_template
+from flask import Flask, render_template, jsonify
 from flask_restful import Api
 from flask_cors import CORS
+from flask_sslify import SSLify  # redirect to https
 import os
 
 import logging
@@ -13,7 +14,17 @@ from resource_models import EventApi, LabelApi, ICSFeed
 
 app = Flask(__name__)
 CORS(app)
+SSLify(app)
 api = Api(app)
+
+
+# add return representations
+@api.representation('application/json')
+def output_json(data, code, headers=None):
+    resp = jsonify(data)
+    resp.status_code = code
+    resp.headers.extend(headers or {})
+    return resp
 
 # Route resources
 api.add_resource(EventApi, '/events/', methods=['GET', 'POST'], endpoint='event')
@@ -43,7 +54,7 @@ def add_label():
 
 
 if __name__ == '__main__':
-    app.debug = os.getenv('FLASK_DEBUG', True) # updates the page as the code is saved
+    app.debug = os.getenv('FLASK_DEBUG') != 'False'  # updates the page as the code is saved
     HOST = '0.0.0.0' if 'PORT' in os.environ else '127.0.0.1'
     PORT = int(os.environ.get('PORT', 3000))
     app.run(host='0.0.0.0', port=PORT)
