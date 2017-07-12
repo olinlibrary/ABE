@@ -85,7 +85,8 @@ sample_events = [
         'description': 'reading lame books',
         'start': datetime(2017, 7, 16, 16), 
         'end': datetime(2017, 7, 16, 18),
-        'rec_id': datetime(2017,7,19,15)
+        'rec_id': datetime(2017,7,19,15),
+        'deleted': False,
         },
     ],
     },
