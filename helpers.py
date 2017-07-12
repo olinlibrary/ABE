@@ -298,11 +298,11 @@ def instance_creation(event):
     day_list = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU']
 
     recurrence = event.recurrence
-
+    ensure_date_time = lambda a: dateutil.parser.parse(a) if not isinstance(a, datetime) else a
     rFrequency = rec_type_list.index(recurrence['frequency'])
     rInterval = int(recurrence['interval'])
     rCount = int(recurrence['count']) if 'count' in recurrence else None
-    rUntil = recurrence['until'] if 'until' in recurrence else None
+    rUntil = ensure_date_time(recurrence['until']) if 'until' in recurrence else None
     rByMonth = recurrence['by_month'] if 'by_month' in recurrence else None
     rByMonthDay = recurrence['by_month_day'] if 'by_month_day' in recurrence else None
 
@@ -312,8 +312,8 @@ def instance_creation(event):
             rByDay.append(day_list.index(i))
     else:
         rByDay = None
-    ensure_date_time = lambda a: dateutil.parser.parse(a) if not isinstance(a, datetime) else a
-    rule_list = list(rrule(freq=rFrequency, count=rCount, interval=rInterval, until=ensure_date_time(rUntil), bymonth=rByMonth, \
+    
+    rule_list = list(rrule(freq=rFrequency, count=rCount, interval=rInterval, until=rUntil, bymonth=rByMonth, \
         bymonthday=rByMonthDay, byweekday=rByDay, dtstart=ensure_date_time(event['start'])))
 
     return(rule_list)
