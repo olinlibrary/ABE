@@ -231,7 +231,7 @@ def event_query(search_dict):
     }
 
     params_recu_event = {
-        'start': lambda a: {'end_recurrence' : {'$gte': a}},
+        'start': lambda a: {'recurrence_end' : {'$gte': a}},
         'end': lambda a: {'start' : {'$lte': a}},
         'labels': lambda a: {'labels' : {'$in': a}},
         'labels_and': lambda a: {'labels' : {'$all': a}},
