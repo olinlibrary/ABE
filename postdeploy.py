@@ -11,8 +11,6 @@ import pdb
 
 logging.info('Performing postdeploy process')
 db_name = os.getenv("HEROKU_APP_NAME", "testing")
-# logging.warning('Setting env variable "DB_NAME" to "{}"'.format(db_name))
-# os.environ['DB_NAME'] = db_name
 logging.warning('Dropping db "{}"'.format(db_name))
 from database import mongo_uri, mongo_db_name
 client = MongoClient(mongo_uri)  # use pymongo to drop database
