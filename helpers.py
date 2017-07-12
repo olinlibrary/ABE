@@ -275,10 +275,6 @@ def recurring_to_full(event, events_list, start, end):
                 if sub_event['start'] <= end and sub_event['start'] >= start \
                     and sub_event['deleted']==False:
                     events_list.append(sub_event_to_full(mongo_to_dict(sub_event), event))
-            else:
-                if sub_event['rec_id'] <= end and sub_event['rec_id'] >= start \
-                    and sub_event['deleted']==False:
-                    events_list.append(sub_event_to_full(mongo_to_dict(sub_event), event))
 
     rule_list = instance_creation(event)
     
@@ -326,7 +322,7 @@ def placeholder_recurring_creation(instance, events_list, event, edit_recurrence
     if 'sub_events' in event:
         for individual in event['sub_events']:
             indiv = datetime.strptime(str(individual['rec_id']), "%Y-%m-%d %H:%M:%S")
-            if instance == indiv:
+            if instance == indiv or individual['deleted']==True:
                 repeat = True
 
     if repeat == False:
