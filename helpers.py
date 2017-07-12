@@ -273,7 +273,7 @@ def recurring_to_full(event, events_list, start, end):
         for sub_event in event['sub_events']:
             if 'start' in sub_event:
                 if sub_event['start'] <= end and sub_event['start'] >= start \
-                    and sub_event['deleted']=='False':
+                    and sub_event['deleted']==False:
                     events_list.append(sub_event_to_full(mongo_to_dict(sub_event), event))
 
     rule_list = instance_creation(event)
@@ -322,7 +322,7 @@ def placeholder_recurring_creation(instance, events_list, event, edit_recurrence
     if 'sub_events' in event:
         for individual in event['sub_events']:
             indiv = dateutil.parser.parse(str(individual['rec_id']))
-            if instance == indiv: # or (instance == indiv and individual['deleted']=='True'):
+            if instance == indiv: # or (instance == indiv and individual['deleted']==True):
                 repeat = True
 
     if repeat == False:
