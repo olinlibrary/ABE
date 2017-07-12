@@ -9,9 +9,6 @@
       "description": "The connection URI for MongoDB.",
       "required": true
     },
-    "DB_NAME": {
-      "description": "The name of the database to use.",
-    },
     "FLASK_DEBUG": {
       "description": "Disable Flask debug mode.",
       "value": "False",
