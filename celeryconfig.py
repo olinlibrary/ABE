@@ -1,4 +1,5 @@
 from celery.schedules import crontab
+from datetime import timedelta
 '''
 CELERY_RESULT_BACKEND = "mongodb"
 CELERY_MONGODB_BACKEND_SETTINGS = {
@@ -11,9 +12,8 @@ CELERY_MONGODB_BACKEND_SETTINGS = {
 #used to schedule tasks periodically and passing optional arguments 
 #Can be very useful. Celery does not seem to support scheduled task but only periodic
 CELERYBEAT_SCHEDULE = {
-    'every-minute': {
+    'add-every-30-seconds': {
         'task': 'tasks.refresh_calendar',
-        'schedule': crontab(minute='*/1'),
-        'args': (1,2),
+        'schedule': timedelta(seconds=30),
     },
 }

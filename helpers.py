@@ -419,4 +419,7 @@ def find_recurrence_end(event):
     rule_list = instance_creation(event)
     return(rule_list[-1])
 
+def printing_a_message():
+    return("return a message")
+
 
