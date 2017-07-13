@@ -1,5 +1,5 @@
 from celery import Celery
-from helpers import printing_a_message
+from helpers import update_ics_feed
 import database as db
 import time 
 import logging
@@ -14,5 +14,4 @@ celery.config_from_object('celeryconfig')
 
 @celery.task
 def refresh_calendar():
-	regret = printing_a_message()
-	return(regret)
+	update_ics_feed()
