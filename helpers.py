@@ -447,11 +447,14 @@ def extract_ics(cal, labels, ics_url):
                     update_ics_to_mongo(component, labels)
     else:
         ics_object = db.ICS(**{'url':ics_url}).save()
+        logging.debug('entire feed: {}'.format(cal.walk()))
         for component in cal.walk():
-            logging.debug("component: {}".format(dict(component)))
+            logging.debug("component: {}".format(component))
             if component.name == "VEVENT":
+                
                 com_dict = ics_to_dict(component, labels, ics_object.id)
-                if 'ics_recurrence' in com_dict:
+                logging.debug("com_dict: {}".format(com_dict))
+                if 'rec_id' in com_dict:
                     normal_event = db.Event.objects(__raw__ = {'UID':com_dict['UID']}).first()
                     logging.debug("event that we're going to create a sub_event for: {}".format(normal_event))
                     create_sub_event(com_dict, normal_event)
