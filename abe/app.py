@@ -4,6 +4,7 @@ from flask import Flask, render_template, jsonify
 from flask_restful import Api
 from flask_cors import CORS
 from flask_sslify import SSLify  # redirect to https
+
 import os
 
 import logging
@@ -50,6 +51,12 @@ def add_event():
 @app.route('/add_label')
 def add_label():
     return render_template('add_label.html')
+
+
+
+
+
+
 
 
 if __name__ == '__main__':
