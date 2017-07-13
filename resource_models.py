@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 from dateutil.rrule import rrule, MONTHLY, WEEKLY, DAILY, YEARLY
 from helpers import (
     mongo_to_dict, request_to_dict, mongo_to_ics, event_query, get_to_event_search, 
-    recurring_to_full, update_sub_event, ics_to_mongo
+    recurring_to_full, update_sub_event, ics_to_dict, extract_ics
     )
 from icalendar import Calendar
 import isodate
@@ -69,7 +69,7 @@ class EventApi(Resource):
             if 'end' in query_dict:
                 end = query_dict['end']
             else:
-                end = datetime(2017, 7, 20)
+                end = datetime(2017, 9, 20)
 
             events_list = []
             for event in results:
@@ -238,11 +238,13 @@ class ICSFeed(Resource):
         data = requests.get(url['url'].strip()).content.decode('utf-8')
         print(url['url'])
         cal = Calendar.from_ical(data)
-        labels = url['labels']
+        if 'labels' in url:
+            labels = url['labels']
+        else:
+            labels = ['unlabeled']
 
-        for component in cal.walk():
-            if component.name == "VEVENT":
-                ics_to_mongo(component, labels)
+        extract_ics(cal, labels, url['url'])
+        
 
     def put(self, ics_name):
         pass

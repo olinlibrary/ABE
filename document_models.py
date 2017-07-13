@@ -30,6 +30,8 @@ class RecurringEventExc(EmbeddedDocument):  # TODO: get a better name
     rec_id = DateTimeField()
     deleted = BooleanField(required=True, default=False)
     _id = ObjectIdField(default=ObjectId)
+    ics_recurrence = DateTimeField()
+    UID = StringField()
 
 
 class Event(Document):
@@ -51,6 +53,8 @@ class Event(Document):
     recurrence = EmbeddedDocumentField(RecurringEventDefinition)
     sub_events = EmbeddedDocumentListField(RecurringEventExc)
 
+    UID = StringField()
+    ics_id = ObjectIdField()
     meta = {'allow_inheritance': True}  # TODO: set indexes
 
     # TODO: look into clean() function for more advanced data validation
@@ -60,3 +64,6 @@ class Label(Document):
     name = StringField(required=True, unique=True)  # TODO: set to primary key?
     description = StringField()
     url = URLField()
+
+class ICS(Document):
+    url = StringField()
