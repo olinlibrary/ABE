@@ -27,3 +27,6 @@ else:
     location = 'localhost'
 
 logging.info('Using db "{}" with {}'.format(mongo_db_name, location))
+
+def return_uri():
+	return mongo_uri

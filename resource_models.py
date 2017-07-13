@@ -73,7 +73,7 @@ class EventApi(Resource):
 
             events_list = []
             for event in results:
-                logging.debug("event: {}".format(mongo_to_dict(event)))
+
                 # checks for recurrent events
                 if 'recurrence' in event:
                     # checks for events from a recurrence that's been edited
