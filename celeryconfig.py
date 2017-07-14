@@ -14,6 +14,6 @@ CELERY_MONGODB_BACKEND_SETTINGS = {
 CELERYBEAT_SCHEDULE = {
     'refresh-every-1-hour': {
         'task': 'tasks.refresh_calendar',
-        'schedule': timedelta(seconds=3600),
+        'schedule': timedelta(seconds=60),
     },
 }

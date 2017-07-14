@@ -30,8 +30,6 @@ class RecurringEventExc(EmbeddedDocument):  # TODO: get a better name
     rec_id = DateTimeField()
     deleted = BooleanField(required=True, default=False)
     _id = ObjectIdField(default=ObjectId)
-    #ics_creation = DateTimeField()
-    #ics_recurrence = DateTimeField()
     UID = StringField()
 
 

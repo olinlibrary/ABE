@@ -1,6 +1,6 @@
 from celery import Celery
-from helpers import update_ics_feed
-import database as db
+from abe.helpers import update_ics_feed
+from abe import database as db
 import time 
 import logging
 
