@@ -1,8 +1,8 @@
 {
   "name": "ABE",
   "scripts": {
-    "postdeploy": "python postdeploy.py",
-    "pr-predestroy": "python pr-predestroy.py"
+    "postdeploy": "python -m abe.postdeploy.py",
+    "pr-predestroy": "python -m abe.pr-predestroy.py"
   },
   "env": {
     "MONGO_URI": {

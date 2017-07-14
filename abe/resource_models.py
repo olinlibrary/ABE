@@ -9,21 +9,17 @@ from pprint import pprint, pformat
 from bson import json_util, objectid
 from datetime import datetime, timedelta
 from dateutil.rrule import rrule, MONTHLY, WEEKLY, DAILY, YEARLY
-from helpers import (
-    mongo_to_dict, request_to_dict, mongo_to_ics, event_query, get_to_event_search, 
-    recurring_to_full, update_sub_event, ics_to_dict, extract_ics
-    )
 from icalendar import Calendar
 import isodate
 
-from helpers import *
+from .helpers import *
 
 import pdb
 import requests
 
 import logging
 
-import database as db
+from . import database as db
 
 
 class EventApi(Resource):
@@ -125,8 +121,8 @@ class EventApi(Resource):
                         result = create_sub_event(received_data, result)
                 else:
                     result.update(**received_data)
-    
-                    
+
+
         except ValidationError as error:
                 return {'error_type': 'validation',
                         'validation_errors': [str(err) for err in error.errors],
