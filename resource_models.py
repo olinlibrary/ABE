@@ -76,10 +76,13 @@ class EventApi(Resource):
 
                 # checks for recurrent events
                 if 'recurrence' in event:
+                    logging.debug("recurrence: {}".format(mongo_to_dict(event)))
                     # checks for events from a recurrence that's been edited
                     events_list = recurring_to_full(event, events_list, start, end)
                 else:
-                    events_list.append(mongo_to_dict(event))
+                    logging.debug("normal: {}".format(mongo_to_dict(event)))
+                    #events_list.append(mongo_to_dict(event))
+            logging.debug("events_list: {}".format(events_list))
             return events_list
 
     def post(self):
