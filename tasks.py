@@ -15,3 +15,4 @@ celery.config_from_object('celeryconfig')
 @celery.task
 def refresh_calendar():
 	update_ics_feed()
+	return("did the stuff")

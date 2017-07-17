@@ -6,6 +6,7 @@ from mongoengine import ValidationError
 
 import logging
 import pdb
+import pytz
 
 from icalendar import Calendar, Event, vCalAddress, vText, vDatetime
 from dateutil.rrule import rrule, MONTHLY, WEEKLY, DAILY, YEARLY
@@ -181,6 +182,7 @@ def ics_to_dict(component, labels, ics_id=None):
     
     if component.get('recurrence-id'):
         event_def['rec_id'] = component.get('recurrence-id').dt
+        #event_def['ics_recurrence'] = component.get('created').dt
     else:
         event_def['ics_id'] = ics_id
     event_def['UID'] = str(component.get('uid'))
@@ -290,7 +292,6 @@ def recurring_to_full(event, events_list, start, end):
             if 'start' in sub_event:
                 if sub_event['start'] <= end and sub_event['start'] >= start \
                     and sub_event['deleted']==False:
-                    logging.debug("woohooo converting a sub_event to dict {}".format(mongo_to_dict(sub_event)))
                     events_list.append(sub_event_to_full(mongo_to_dict(sub_event), event))
 
     rule_list = instance_creation(event)
@@ -388,18 +389,27 @@ def update_sub_event(received_data, parent_event, sub_event_id, ics=False):
     """edits a sub_event that has already been created
     """
     for sub_event in parent_event.sub_events:
-        if sub_event["_id"] == sub_event_id:
-            updated_sub_event_dict = create_new_sub_event_defintion(mongo_to_dict(sub_event), received_data, parent_event)
-            updated_sub_event = db.RecurringEventExc(**updated_sub_event_dict)
-            if ics == False:
+        if ics == False:
+            if sub_event['_id']== sub_event_id:
+                updated_sub_event_dict = create_new_sub_event_defintion(mongo_to_dict(sub_event), received_data, parent_event)
+                updated_sub_event = db.RecurringEventExc(**updated_sub_event_dict)
                 parent_event.update(pull__sub_events___id=sub_event_id)
-            else:
-                parent_event.update(pull__sub_events___UID=sub_event_id)
-            parent_event.update(add_to_set__sub_events=updated_sub_event_dict)
-            parent_event.recurrence_end = find_recurrence_end(parent_event)
-            parent_event.save()
-            parent_event.reload()
-    return(updated_sub_event)
+                parent_event.update(add_to_set__sub_events=updated_sub_event_dict)
+                parent_event.recurrence_end = find_recurrence_end(parent_event)
+                parent_event.save()
+                return(updated_sub_event)
+        elif ics == True:
+            sub_event_compare = sub_event["rec_id"].replace(tzinfo=pytz.UTC)
+            logging.debug("the stored id: {} and the passed id: {}".format(type(sub_event_compare), type(sub_event_id)))
+            if sub_event_compare == sub_event_id:
+                logging.debug("yaaayyyy")
+                updated_sub_event_dict = create_new_sub_event_defintion(mongo_to_dict(sub_event), received_data, parent_event)
+                updated_sub_event = db.RecurringEventExc(**updated_sub_event_dict)
+                parent_event.update(pull__sub_events__rec_id=sub_event_id)
+                parent_event.update(add_to_set__sub_events=updated_sub_event_dict)
+                parent_event.recurrence_end = find_recurrence_end(parent_event)
+                parent_event.save()
+                return(updated_sub_event)
 
 def sub_event_to_full(sub_event_dict, event):
     """expands a sub_event definition to have all fields full_Calendar requires
@@ -481,25 +491,30 @@ def extract_ics(cal, ics_url, labels=None):
 
 def update_ics_to_mongo(component, labels):
     normal_event = db.Event.objects(__raw__ = {'UID' : str(component.get('UID'))}).first()
-    parent_sub_event = db.Event.objects(__raw__ = {'sub_events.ics_creation' : component.get('created').dt}).first()
+    if component.get('recurrence-id'):
+        parent_sub_event = db.Event.objects(__raw__ = {'sub_events.rec_id' : component.get('recurrence-id').dt}).first()
+        logging.debug("parent event found {} for reccurrence-id: {}".format(mongo_to_dict(parent_sub_event), component.get('recurrence-id').dt))
     event_dict = ics_to_dict(component, labels)
     if parent_sub_event:
         logging.debug("sub event updated with: {}".format(event_dict))
-        update_sub_event(event_dict, parent_sub_event, component.get('created').dt, True)
+        update_sub_event(event_dict, parent_sub_event,event_dict['rec_id'], True)
     elif normal_event:
         if component.get('recurrence-id'):
-            create_sub_event(event_dict, normal_event)
             logging.debug("new sub event created with: {}".format(event_dict))
+            create_sub_event(event_dict, normal_event)
+            
         else:
+            logging.debug("normal event updated with: {}".format(event_dict))
             normal_event.update(**event_dict)
-            logging.debug("normal event updated with: {}".format(event_dict)) 
+             
     else:
-        
-        db.Event(**event_dict).save()
         logging.debug("normal event created with: {}".format(event_dict))
+        db.Event(**event_dict).save()
+        
 
 def update_ics_feed():
     all_ics_feeds = db.ICS.objects(__raw__ = {})
+    print("trying to survive")
     for feed in all_ics_feeds:
         data = requests.get(feed['url'].strip()).content.decode('utf-8')
         cal = Calendar.from_ical(data)
