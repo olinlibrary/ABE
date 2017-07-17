@@ -41,12 +41,19 @@ def mongo_to_dict(obj):
             data = obj[field_name]
             if isinstance(obj._fields[field_name], ListField):
                 return_data.append((field_name, list_field_to_dict(data)))
+                #logging.debug("lisfield {} with value {} to return_data: {}".format(field_name, obj._fields[field_name], return_data))
             elif isinstance(obj._fields[field_name], EmbeddedDocumentField):
                 return_data.append((field_name, mongo_to_dict(data)))
+                #logging.debug("embedded document field {} with value {} to return_data: {}".format(field_name, obj._fields[field_name], return_data))
+        
             elif isinstance(obj._fields[field_name], DictField):
                 return_data.append((field_name, data))
+                #logging.debug("dictfield {} with value {} to return_data: {}".format(field_name, obj._fields[field_name], return_data))
+            
             else:
                 return_data.append((field_name, mongo_to_python_type(obj._fields[field_name],data)))
+                #logging.debug("other {} with value {} to return_data: {}".format(field_name, obj._fields[field_name], return_data))
+            
 
     return dict(return_data)
 
@@ -283,6 +290,7 @@ def recurring_to_full(event, events_list, start, end):
             if 'start' in sub_event:
                 if sub_event['start'] <= end and sub_event['start'] >= start \
                     and sub_event['deleted']==False:
+                    logging.debug("woohooo converting a sub_event to dict {}".format(mongo_to_dict(sub_event)))
                     events_list.append(sub_event_to_full(mongo_to_dict(sub_event), event))
 
     rule_list = instance_creation(event)
@@ -330,7 +338,6 @@ def placeholder_recurring_creation(instance, events_list, event, edit_recurrence
     repeat = False
     if 'sub_events' in event:
         for individual in event['sub_events']:
-            logging.debug(str(individual['rec_id']))
             indiv = dateutil.parser.parse(str(individual['rec_id']))
             if instance == indiv: # or (instance == indiv and individual['deleted']==True):
                 repeat = True
@@ -404,6 +411,8 @@ def sub_event_to_full(sub_event_dict, event):
             if field not in recurring_def_fields:
                 if field == 'id':
                     sub_event_dict["sid"] = str(event[field])
+                elif field == 'ics_id':
+                    sub_event_dict[field] = str(event[field])
                 else:
                     sub_event_dict[field] = event[field]
     sub_event_dict["id"] = sub_event_dict.pop("_id")
@@ -433,7 +442,7 @@ def find_recurrence_end(event):
     rule_list = instance_creation(event)
     return(rule_list[-1])
 
-def extract_ics(cal, labels, ics_url):
+def extract_ics(cal, ics_url, labels=None):
     results = db.ICS.objects(url=ics_url).first()
     logging.debug("ics feeds: {}".format(mongo_to_dict(results)))
     if results:
@@ -448,22 +457,26 @@ def extract_ics(cal, labels, ics_url):
                     update_ics_to_mongo(component, labels)
     else:
         ics_object = db.ICS(**{'url':ics_url}).save()
-        logging.debug('entire feed: {}'.format(cal.walk()))
+        temporary_dict = []
         for component in cal.walk():
-            logging.debug("component: {}".format(component))
             if component.name == "VEVENT":
-                
                 com_dict = ics_to_dict(component, labels, ics_object.id)
-                logging.debug("com_dict: {}".format(com_dict))
+                normal_event = db.Event.objects(__raw__ = {'UID':com_dict['UID']}).first()
                 if 'rec_id' in com_dict:
-                    normal_event = db.Event.objects(__raw__ = {'UID':com_dict['UID']}).first()
-                    logging.debug("event that we're going to create a sub_event for: {}".format(normal_event))
-                    create_sub_event(com_dict, normal_event)
-                    logging.debug("sub event created in new instance with: {}".format(event_dict))
+                    if normal_event is not None:
+                        create_sub_event(com_dict, normal_event)
+                        logging.debug("sub event created in new instance with: {}".format(com_dict))
+                    else:
+                        temporary_dict.append(com_dict)
+                        logging.debug("temporarily saved recurring event as dict")
                 else:
-                    logging.debug("tried making an event")
                     db.Event(**com_dict).save()
-                    logging.debug("new event created in new instance with: {}".format(event_dict))
+                    logging.debug("new event created in new instance with: {}".format(com_dict))
+
+        for sub_event_dict in temporary_dict:
+            normal_event = db.Event.objects(__raw__ = {'UID':sub_event_dict['UID']}).first()
+            create_sub_event(sub_event_dict, normal_event)
+            logging.debug("temporarily put off sub_event now saved as mongodb object")
                 
 
 def update_ics_to_mongo(component, labels):
@@ -488,9 +501,9 @@ def update_ics_to_mongo(component, labels):
 def update_ics_feed():
     all_ics_feeds = db.ICS.objects(__raw__ = {})
     for feed in all_ics_feeds:
-        data = requests.get(feed.strip()).content.decode('utf-8')
+        data = requests.get(feed['url'].strip()).content.decode('utf-8')
         cal = Calendar.from_ical(data)
-        extract_ics(cal, feed)
+        extract_ics(cal, feed['url'])
 
 
 
