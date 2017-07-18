@@ -9,10 +9,6 @@ from pprint import pprint, pformat
 from bson import json_util, objectid
 from datetime import datetime, timedelta
 from dateutil.rrule import rrule, MONTHLY, WEEKLY, DAILY, YEARLY
-from .helpers import (
-    mongo_to_dict, request_to_dict, mongo_to_ics, event_query, get_to_event_search,
-    recurring_to_full, update_sub_event, ics_to_mongo
-    )
 from icalendar import Calendar
 import isodate
 
@@ -69,6 +65,7 @@ class EventApi(Resource):
             if 'end' in query_dict:
                 end = query_dict['end']
             else:
+
                 end = datetime(2017, 7, 20)
 
             events_list = []
@@ -91,6 +88,7 @@ class EventApi(Resource):
                 new_event.labels = ['unlabeled']
             if 'recurrence' in new_event:
                 new_event.recurrence_end = find_recurrence_end(new_event)
+                logging.debug("made an end: {}".format(new_event.recurrence_end))
             new_event.save()
         except ValidationError as error:
             return {'error_type': 'validation',
@@ -237,11 +235,13 @@ class ICSFeed(Resource):
         data = requests.get(url['url'].strip()).content.decode('utf-8')
         print(url['url'])
         cal = Calendar.from_ical(data)
-        labels = url['labels']
+        if 'labels' in url:
+            labels = url['labels']
+        else:
+            labels = ['unlabeled']
 
-        for component in cal.walk():
-            if component.name == "VEVENT":
-                ics_to_mongo(component, labels)
+        extract_ics(cal, url['url'], labels)
+        
 
     def put(self, ics_name):
         pass

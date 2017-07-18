@@ -1,1 +1,1 @@
-web: python run.py
+web: honcho start -f ProcfileHoncho

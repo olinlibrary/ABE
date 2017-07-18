@@ -1,3 +1,6 @@
+celery==3.1.25
+celery-with-mongodb==3.0
+honcho==1.0.1
 Werkzeug==0.12.2
 aniso8601==1.2.1
 click==6.7
