@@ -1,3 +1,1 @@
-web: python app.py
-worker: celery worker --app=tasks.celery
-
+web: honcho start -f ProcfileHoncho
