@@ -463,7 +463,7 @@ def extract_ics(cal, ics_url, labels=None):
                 
                 logging.debug("last modified: {} and now: {}".format(last_modified, now))
                 difference = now - last_modified
-                if difference.total_seconds() < 120:
+                if difference.total_seconds() < 3600:
                     update_ics_to_mongo(component, labels)
     else:
         ics_object = db.ICS(**{'url':ics_url}).save()
@@ -521,7 +521,6 @@ def update_ics_to_mongo(component, labels):
 
 def update_ics_feed():
     all_ics_feeds = db.ICS.objects(__raw__ = {})
-    print("trying to survive")
     for feed in all_ics_feeds:
         data = requests.get(feed['url'].strip()).content.decode('utf-8')
         cal = Calendar.from_ical(data)
