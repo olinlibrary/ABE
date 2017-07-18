@@ -76,7 +76,7 @@ class EventApi(Resource):
 
                 # checks for recurrent events
                 if 'recurrence' in event:
-                    #logging.debug("recurrence: {}".format(mongo_to_dict(event)))
+                    logging.debug("recurrence end: {}".format(mongo_to_dict(event)))
                     # checks for events from a recurrence that's been edited
                     events_list = recurring_to_full(event, events_list, start, end)
                 else:
@@ -95,6 +95,7 @@ class EventApi(Resource):
                 new_event.labels = ['unlabeled']
             if 'recurrence' in new_event:
                 new_event.recurrence_end = find_recurrence_end(new_event)
+                logging.debug("made an end: {}".format(new_event.recurrence_end))
             new_event.save()
         except ValidationError as error:
             return {'error_type': 'validation',

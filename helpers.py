@@ -478,9 +478,16 @@ def extract_ics(cal, ics_url, labels=None):
                         logging.debug("sub event created in new instance with: {}".format(com_dict))
                     else:
                         temporary_dict.append(com_dict)
+
                         logging.debug("temporarily saved recurring event as dict")
                 else:
-                    db.Event(**com_dict).save()
+                    new_event = db.Event(**com_dict).save()
+                    if new_event.labels == []:
+                        new_event.labels = ['unlabeled']
+                    if 'recurrence' in new_event:
+                        new_event.recurrence_end = find_recurrence_end(new_event)
+                        logging.debug("made an end: {}".format(new_event.recurrence_end))
+                    new_event.save()
                     logging.debug("new event created in new instance with: {}".format(com_dict))
 
         for sub_event_dict in temporary_dict:

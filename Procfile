@@ -1,2 +1,3 @@
 web: python app.py
-worker: celery worker --app=tasks.celery
+worker: celery -A tasks beat -l info
+worker: celery -A tasks worker -l info
