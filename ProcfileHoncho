@@ -1,3 +1,4 @@
 web: python run.py
 worker1: celery -A tasks beat -l info
 worker2: celery -A tasks worker -l info
+
