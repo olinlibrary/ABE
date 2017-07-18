@@ -6,15 +6,14 @@ from mongoengine import ValidationError
 
 import logging
 import pdb
-import pytz
 
 from icalendar import Calendar, Event, vCalAddress, vText, vDatetime
 from dateutil.rrule import rrule, MONTHLY, WEEKLY, DAILY, YEARLY
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from bson import objectid
 from mongoengine import *
-from icalendar import Calendar
 
+import pytz
 import isodate
 import dateutil.parser
 import requests
@@ -164,7 +163,9 @@ def mongo_to_ics(events):
     return response
 
 
+
 def ics_to_dict(component, labels, ics_id=None):
+
     event_def = {}
     event_def['title'] = str(component.get('summary'))
     event_def['description'] = str(component.get('description'))
@@ -178,6 +179,7 @@ def ics_to_dict(component, labels, ics_id=None):
     else:
         event_def['ics_id'] = ics_id
         event_def['UID'] = str(component.get('uid'))
+
     if component.get('rrule'):
         rrule = component.get('rrule')
         rec_def = {}
@@ -193,7 +195,7 @@ def ics_to_dict(component, labels, ics_id=None):
 
         event_def['recurrence'] = rec_def
     return(event_def)
-    
+
 
 
 def get_to_event_search(request):
@@ -375,6 +377,7 @@ def create_sub_event(received_data, parent_event):
 
     return(rec_event)
 
+
 def update_sub_event(received_data, parent_event, sub_event_id, ics=False):
     """edits a sub_event that has already been created
     """
@@ -439,6 +442,7 @@ def create_new_sub_event_defintion(sub_event, updates, parent_event):
 def find_recurrence_end(event):
     rule_list = instance_creation(event)
     return(rule_list[-1])
+
 
 def extract_ics(cal, ics_url, labels=None):
     results = db.ICS.objects(url=ics_url).first()

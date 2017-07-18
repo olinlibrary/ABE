@@ -53,6 +53,7 @@ class Event(Document):
 
     UID = StringField()
     ics_id = ObjectIdField()
+
     meta = {'allow_inheritance': True}  # TODO: set indexes
 
     # TODO: look into clean() function for more advanced data validation
