@@ -51,9 +51,6 @@ class Event(Document):
     recurrence = EmbeddedDocumentField(RecurringEventDefinition)
     sub_events = EmbeddedDocumentListField(RecurringEventExc)
 
-    UID = StringField()
-    ics_id = ObjectIdField()
-
     meta = {'allow_inheritance': True}  # TODO: set indexes
 
     # TODO: look into clean() function for more advanced data validation
@@ -63,6 +60,3 @@ class Label(Document):
     name = StringField(required=True, unique=True)  # TODO: set to primary key?
     description = StringField()
     url = URLField()
-
-class ICS(Document):
-    url = StringField()
