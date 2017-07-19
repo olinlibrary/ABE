@@ -307,15 +307,10 @@ def instance_creation(event):
 
     rFrequency = rec_type_list.index(recurrence['frequency'])
     rInterval = int(recurrence['interval'])
-    logging.debug("rInterval: {}".format(rInterval))
     rCount = int(recurrence['count']) if 'count' in recurrence else None
-    logging.debug("rCount: {}".format(rCount))
     rUntil = ensure_date_time(recurrence['until']) if 'until' in recurrence else None
-    logging.debug("rUntil: {}".format(rUntil))
     rByMonth = recurrence['by_month'] if 'by_month' in recurrence else None
-    logging.debug("rByMonth: {}".format(rByMonth))
     rByMonthDay = recurrence['by_month_day'] if 'by_month_day' in recurrence else None
-    logging.debug("rByMonthDay: {}".format(rByMonthDay))
 
     if 'by_day' in recurrence:
         rByDay = []
@@ -323,7 +318,6 @@ def instance_creation(event):
             rByDay.append(day_list.index(i))
     else:
         rByDay = None
-    logging.debug("rByDay: {}".format(rByDay))
 
     rule_list = list(rrule(freq=rFrequency, count=rCount, interval=rInterval, until=rUntil, bymonth=rByMonth, \
         bymonthday=rByMonthDay, byweekday=rByDay, dtstart=ensure_date_time(event['start'])))
@@ -460,7 +454,7 @@ def extract_ics(cal, ics_url, labels=None):
                 last_modified = component.get('LAST-MODIFIED').dt
                 now = datetime.now(timezone.utc)
                 difference = now - last_modified
-                if difference.total_seconds() < 60:
+                if difference.total_seconds() < 7200:
                     update_ics_to_mongo(component, labels)
     else:
         ics_object = db.ICS(**{'url':ics_url}).save()
