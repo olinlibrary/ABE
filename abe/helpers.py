@@ -392,6 +392,7 @@ def update_sub_event(received_data, parent_event, sub_event_id, ics=False):
                 parent_event.update(add_to_set__sub_events=updated_sub_event_dict)
                 parent_event.recurrence_end = find_recurrence_end(parent_event)
                 parent_event.save()
+                parent_event.reload()
                 return(updated_sub_event)
         elif ics == True:
             sub_event_compare = sub_event["rec_id"].replace(tzinfo=pytz.UTC)
@@ -402,6 +403,7 @@ def update_sub_event(received_data, parent_event, sub_event_id, ics=False):
                 parent_event.update(add_to_set__sub_events=updated_sub_event_dict)
                 parent_event.recurrence_end = find_recurrence_end(parent_event)
                 parent_event.save()
+                parent_event.reload()
                 return(updated_sub_event)
 
 def sub_event_to_full(sub_event_dict, event):
@@ -502,6 +504,7 @@ def update_ics_to_mongo(component, labels):
         else:
             logging.debug("normal event updated")
             normal_event.update(**event_dict)
+            normal_event.reload()
              
     else:
         logging.debug("normal event created")
