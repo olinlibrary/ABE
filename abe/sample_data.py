@@ -65,6 +65,17 @@ sample_events = [
         "end": parser.parse("2017-07-15T05:00:53Z"),
         "visibility": "students",
         "labels": ["featured"],
+    },
+    {
+        "_cls": "Event",
+        "title": "Our first all day event",
+        "description": "Some fun all day stuff",
+        "location": "EH3ne",
+        "start": parser.parse("2017-07-28T00:00:00Z"),
+        "end": parser.parse("2017-07-28T23:59:59Z"),
+        "allDay": True,
+        "visibility": "students",
+        "labels": ["featured"],
     }
 ]
 

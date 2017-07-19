@@ -31,13 +31,26 @@ from abe.helper_functions.sub_event_helpers import create_sub_event, update_sub_
 def create_ics_event(event,recurrence=False):
     """creates ICS event definition
     """
+    date_to_ics = lambda a: a[:-9].replace('-','')
+
     new_event = Event()
     new_event.add('summary', event['title'])
     new_event.add('location', event['location'])
     new_event.add('description', event['description'])
-    new_event.add('dtstart', event['start'])
+    if event['allDay'] == True:
+        start_string = 'dtstart;VALUE=DATE'
+        end_string = 'dtend;VALUE=DATE'
+        event_start = date_to_ics(event['start'].isoformat())
+        event_end = date_to_ics(event['end'].isoformat())
+    else:
+        start_string = 'dtstart'
+        end_string = 'dtend'
+        event_start = event['start']
+        event_end = event['end']
+
+    new_event.add(start_string, event_start)
     if 'end' in event:
-        new_event.add('dtend', event['end'])
+        new_event.add(end_string, event_end)
     new_event.add('TRANSP', 'OPAQUE')
 
     if recurrence == False:
