@@ -31,6 +31,7 @@ class RecurringEventExc(EmbeddedDocument):  # TODO: get a better name
     deleted = BooleanField(required=True, default=False)
     _id = ObjectIdField(default=ObjectId)
     UID = StringField()
+    allDay = BooleanField()
 
 
 class Event(Document):
@@ -43,6 +44,7 @@ class Event(Document):
 
     start = DateTimeField(required=True)
     end = DateTimeField()
+    allDay = BooleanField()
 
     recurrence_end = DateTimeField()
 
