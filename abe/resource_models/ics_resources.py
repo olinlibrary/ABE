@@ -30,7 +30,7 @@ class ICSApi(Resource):
         results = db.Event.objects(__raw__=query)
         response = mongo_to_ics(results)
         logging.debug("ics feed created")
-        cd = "attachment;filename=abenew.ics"
+        cd = "attachment;filename=abe.ics"
         return Response(response,
                    mimetype="text/calendar",
                    headers={"Content-Disposition": cd})

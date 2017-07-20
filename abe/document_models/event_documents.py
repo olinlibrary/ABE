@@ -13,7 +13,8 @@ class RecurringEventDefinition(EmbeddedDocument):
     until = DateTimeField()
     by_day = ListField(StringField())
     by_month_day = StringField()
-    by_month = StringField()
+    by_month = ListField(StringField())
+    by_year_day = ListField(StringField())
 
 
 class RecurringEventExc(EmbeddedDocument):  # TODO: get a better name
