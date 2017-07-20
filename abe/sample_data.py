@@ -36,8 +36,8 @@ sample_events = [
         'recurrence': {
             'frequency': 'WEEKLY',
             'interval': '1',
-            'by_day': ["MO", "TU", "WE", "TH", "FR"],
-            'count': '40'
+            'until': datetime(2017, 7, 31),
+            'by_day': ["MO", "TU", "WE", "TH", "FR"]
         }
     },
     {
@@ -251,6 +251,7 @@ def load_data(
         logging.info("Inserting sample ics data")
         for ics in ics_data:
             db.ICS(**ics).save()
+
 
 if __name__ == '__main__':  # import data
     from . import database as db
