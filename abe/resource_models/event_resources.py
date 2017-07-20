@@ -67,7 +67,6 @@ class EventApi(Resource):
             for event in results:
                 # checks for recurrent events
                 if 'recurrence' in event:
-
                     # checks for events from a recurrence that's been edited
                     events_list = recurring_to_full(event, events_list, start, end)
                 else:

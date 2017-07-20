@@ -114,7 +114,6 @@ def create_new_sub_event_defintion(sub_event, updates, parent_event):
 
 
 def instance_creation(event, end=None):
-    
     rec_type_list = ['YEARLY', 'MONTHLY', 'WEEKLY', 'DAILY']
 
     day_list = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU']

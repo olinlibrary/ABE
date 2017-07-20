@@ -90,6 +90,7 @@ def event_query(search_dict):
     for key, get_pattern in params_recu_event.items():
         if key in search_dict.keys():
             query_rec_event.update(get_pattern(search_dict[key]))
+    query_rec_event.update({'forever' : True})
 
     query_forever = {'forever' : True}
 
