@@ -36,8 +36,8 @@ sample_events = [
         'recurrence': {
             'frequency': 'WEEKLY',
             'interval': '1',
-            'by_day': ["MO", "TU", "WE", "TH", "FR"],
-            'count': '40'
+            'until': datetime(2017, 7, 31),
+            'by_day': ["MO", "TU", "WE", "TH", "FR"]
         }
     },
     {
@@ -224,7 +224,6 @@ def load_data(
 ):
     import logging
     logging.basicConfig(level=logging.DEBUG)
-<<<<<<< HEAD
     if event_data:
         logging.info("Inserting sample event data")
         for event in event_data:
@@ -235,7 +234,12 @@ def load_data(
                         value,
                         'US/Eastern'
                     ).to('utc').datetime
-            db.Event(**event).save()
+            new_event = db.Event(**event)
+            if 'recurrence' in new_event:
+                if new_event.recurrence.forever == False:
+                    new_event.recurrence_end = find_recurrence_end(new_event)
+                    logging.info("made some end recurrences: {}".format(new_event.recurrence_end))
+            new_event.save()
     if label_data:
         logging.info("Inserting sample label data")
         for index, label in enumerate(label_data):
@@ -246,19 +250,6 @@ def load_data(
         logging.info("Inserting sample ics data")
         for ics in ics_data:
             db.ICS(**ics).save()
-=======
-    logging.info("Inserting sample event data")
-    for event in event_data:
-        new_event = db.Event(**event)
-        if 'recurrence' in new_event:
-            if new_event.recurrence.forever == False:
-                new_event.recurrence_end = find_recurrence_end(new_event)
-                logging.info("made some end recurrences: {}".format(new_event.recurrence_end))
-        new_event.save()
-    logging.info("Inserting sample label data")
-    for label in label_data:
-        db.Label(**label).save()
->>>>>>> 9739fb6... reduced querying time for forever recurring events
 
 
 if __name__ == '__main__':  # import data
