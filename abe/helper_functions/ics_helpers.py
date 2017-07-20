@@ -12,7 +12,7 @@ import logging
 import pdb
 import pytz
 
-from icalendar import Calendar, Event, vCalAddress, vText, vDatetime
+from icalendar import Calendar, Event, vCalAddress, vText, vDatetime, Timezone
 from dateutil.rrule import rrule, MONTHLY, WEEKLY, DAILY, YEARLY
 from datetime import datetime, timedelta, timezone
 from bson import objectid
@@ -42,11 +42,20 @@ def create_ics_event(event,recurrence=False):
         end_string = 'dtend;VALUE=DATE'
         event_start = date_to_ics(event['start'].isoformat())
         event_end = date_to_ics(event['end'].isoformat())
+        if (event['end'] - event['start']) < timedelta(days=1):
+            
+            if event_start == event_end:
+                event_end = str(int(event_end) + 1)
+
     else:
         start_string = 'dtstart'
         end_string = 'dtend'
-        event_start = event['start']
-        event_end = event['end']
+        
+        utc = pytz.utc
+        event_start = utc.localize(event['start'])
+        event_end = utc.localize(event['end'])
+    logging.debug("event start {}".format(event_start))
+    logging.debug("event start {}".format(event_end))
 
     new_event.add(start_string, event_start)
     if 'end' in event:
@@ -89,6 +98,12 @@ def create_ics_recurrence(new_event, recurrence):
     new_event.add('RRULE', rec_ics_string)
     return(new_event)
 
+def create_timezone_component(timezone):
+    timezone.add('TZID', 'Greenland/Scoresbysund')
+
+    return(timezone)
+
+
 
 def mongo_to_ics(events):
     """creates the iCal based on the MongoDb database
@@ -97,6 +112,12 @@ def mongo_to_ics(events):
 
     #initialize calendar object
     cal = Calendar()
+    cal.add('PRODID', 'ABE')
+    cal.add('VERSION', '2.0')
+    #cal.add('dtstamp', datetime.now(timezone.utc))
+    #cal.add('FUN', 'SUCKS')
+    #timezone = create_timezone_component(Timezone())
+    #cal.add_component(timezone)
     for event in events:
         new_event = create_ics_event(event)
 
@@ -115,7 +136,7 @@ def mongo_to_ics(events):
 
         cal.add_component(new_event)
 
-
+    #logging.debug("response: {}".format(cal))
     response = cal.to_ical()
     return response
 
