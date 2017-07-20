@@ -57,7 +57,8 @@ def update_sub_event(received_data, parent_event, sub_event_id, ics=False):
                 updated_sub_event = db.RecurringEventExc(**updated_sub_event_dict)
                 parent_event.update(pull__sub_events___id=sub_event_id)
                 parent_event.update(add_to_set__sub_events=updated_sub_event_dict)
-                parent_event.recurrence_end = find_recurrence_end(parent_event)
+                if updated_sub_event_dict['forever'] == False:
+                    parent_event.recurrence_end = find_recurrence_end(parent_event)
                 parent_event.save()
                 parent_event.reload()
                 return(updated_sub_event)
@@ -68,7 +69,8 @@ def update_sub_event(received_data, parent_event, sub_event_id, ics=False):
                 updated_sub_event = db.RecurringEventExc(**updated_sub_event_dict)
                 parent_event.update(pull__sub_events__rec_id=sub_event_id)
                 parent_event.update(add_to_set__sub_events=updated_sub_event_dict)
-                parent_event.recurrence_end = find_recurrence_end(parent_event)
+                if updated_sub_event_dict['forever'] == False:
+                    parent_event.recurrence_end = find_recurrence_end(parent_event)
                 parent_event.save()
                 parent_event.reload()
                 return(updated_sub_event)
@@ -111,7 +113,7 @@ def create_new_sub_event_defintion(sub_event, updates, parent_event):
     return(sub_event)
 
 
-def instance_creation(event):
+def instance_creation(event, end=None):
     rec_type_list = ['YEARLY', 'MONTHLY', 'WEEKLY', 'DAILY']
 
     day_list = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU']
@@ -121,8 +123,11 @@ def instance_creation(event):
 
     rFrequency = rec_type_list.index(recurrence['frequency'])
     rInterval = int(recurrence['interval'])
+    if recurrence.forever == True:
+        rUntil = ensure_date_time(end) if end is not None else None
+    else:
+        rUntil = ensure_date_time(recurrence['until']) if 'until' in recurrence else None
     rCount = int(recurrence['count']) if 'count' in recurrence else None
-    rUntil = ensure_date_time(recurrence['until']) if 'until' in recurrence else None
     rByMonth = recurrence['by_month'] if 'by_month' in recurrence else None
     rByMonthDay = recurrence['by_month_day'] if 'by_month_day' in recurrence else None
 

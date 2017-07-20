@@ -33,7 +33,7 @@ def recurring_to_full(event, events_list, start, end):
                     and sub_event['deleted']==False:
                     events_list.append(sub_event_to_full(mongo_to_dict(sub_event), event))
 
-    rule_list = instance_creation(event)
+    rule_list = instance_creation(event, end)
 
     for instance in rule_list:
         if instance >= start and instance < end:
