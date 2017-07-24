@@ -77,7 +77,6 @@ class EventApi(Resource):
                     # checks for events from a recurrence that's been edited
                     events_list = recurring_to_full(event, events_list, start, end)
                 else:
-                    #logging.debug("normal: {}".format(mongo_to_dict(event)))
                     events_list.append(mongo_to_dict(event))
             return events_list
 
