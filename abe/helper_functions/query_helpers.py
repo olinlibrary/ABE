@@ -47,9 +47,9 @@ def get_to_event_search(request):
         if key in search_dict.keys():
             search_dict[key] = process(search_dict[key])
     if 'start' not in search_dict:
-        search_dict['start'] = datetime(2017,6,1)
+        search_dict['start'] = datetime(2017,9,20)
     if 'end' not in search_dict:
-        search_dict['end'] = datetime(2017, 7, 20)
+        search_dict['end'] = datetime(2018, 10, 1)
     return search_dict
 
 
@@ -87,9 +87,11 @@ def event_query(search_dict):
     for key, get_pattern in params_recu_event.items():
         if key in search_dict.keys():
             query_rec_event.update(get_pattern(search_dict[key]))
-    query_rec_event.update({'forever' : True})
 
-    query = {'$or': [query_reg_event,query_rec_event]}
+    query_forever = {'forever' : True}
+
+    query = {'$or': [query_rec_event, query_reg_event, query_forever]}
+    #logging.debug("this query: {}".format(query))
     return query
 
 

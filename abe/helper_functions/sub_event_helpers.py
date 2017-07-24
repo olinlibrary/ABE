@@ -127,9 +127,16 @@ def instance_creation(event, end=None):
         start = ensure_date_time(event['start'])
         rByMonth = int(start.month)
         rByMonthDay = int(start.day)
+        rByDay = None
     else:
         rByMonthDay = int(recurrence['by_month_day']) if 'by_month_day' in recurrence else None
         rByMonth = int(recurrence['by_month']) if 'by_month' in recurrence else None
+        if 'by_day' in recurrence:
+            rByDay = []
+            for i in recurrence['by_day']:
+                rByDay.append(day_list.index(i))
+            else:
+                rByDay = None
 
     rInterval = int(recurrence['interval'])
     if recurrence.forever == True:
@@ -139,19 +146,18 @@ def instance_creation(event, end=None):
     rCount = int(recurrence['count']) if 'count' in recurrence else None
     
 
-    if 'by_day' in recurrence:
-        rByDay = []
-        for i in recurrence['by_day']:
-            rByDay.append(day_list.index(i))
-    else:
-        rByDay = None
+    
 
     rule_list = list(rrule(freq=rFrequency, count=rCount, interval=rInterval, until=rUntil, bymonth=rByMonth, \
         bymonthday=rByMonthDay, byweekday=rByDay, dtstart=ensure_date_time(event['start'])))
 
+    #logging.debug("rule_list: {}".format(rule_list))
     return(rule_list)
 
 
 def find_recurrence_end(event):
+    ensure_date_time = lambda a: dateutil.parser.parse(a) if not isinstance(a, datetime) else a
     rule_list = instance_creation(event)
-    return(rule_list[-1])
+    event_end = rule_list[-1] + timedelta(hours=24)
+    #logging.debug("event end: {}".format(event_end))
+    return(event_end)
