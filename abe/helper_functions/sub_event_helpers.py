@@ -151,7 +151,6 @@ def instance_creation(event, end=None):
     rule_list = list(rrule(freq=rFrequency, count=rCount, interval=rInterval, until=rUntil, bymonth=rByMonth, \
         bymonthday=rByMonthDay, byweekday=rByDay, dtstart=ensure_date_time(event['start'])))
 
-    #logging.debug("rule_list: {}".format(rule_list))
     return(rule_list)
 
 
@@ -159,5 +158,4 @@ def find_recurrence_end(event):
     ensure_date_time = lambda a: dateutil.parser.parse(a) if not isinstance(a, datetime) else a
     rule_list = instance_creation(event)
     event_end = rule_list[-1] + timedelta(hours=24)
-    #logging.debug("event end: {}".format(event_end))
     return(event_end)
