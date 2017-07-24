@@ -223,6 +223,7 @@ def load_data(
     ics_data=sample_ics
 ):
     import logging
+    from .helper_functions.sub_event_helpers import find_recurrence_end
     logging.basicConfig(level=logging.DEBUG)
     if event_data:
         logging.info("Inserting sample event data")
@@ -254,5 +255,5 @@ def load_data(
 
 if __name__ == '__main__':  # import data
     from . import database as db
-    from .helper_functions.sub_event_helpers import find_recurrence_end
+    
     load_data(db)
