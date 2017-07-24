@@ -180,7 +180,6 @@ def extract_ics(cal, ics_url, labels=None):
     else:
         ics_object = db.ICS(**{'url':ics_url}).save()
         temporary_dict = []
-        timezone_info = ''
         for component in cal.walk():
             if component.name == "VEVENT":
                 com_dict = ics_to_dict(component, labels, ics_object.id)
