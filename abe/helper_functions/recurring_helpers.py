@@ -59,9 +59,9 @@ def placeholder_recurring_creation(instance, events_list, event, edit_recurrence
 
     if repeat == False:
         fake_object = {}
-        fake_object['title'] = event['title']
-        fake_object['location'] = event['location']
-        fake_object['description'] = event['description']
+        fake_object['title'] = event['title'] if 'title' in event else pass
+        fake_object['location'] = event['location'] if 'location' in event else pass
+        fake_object['description'] = event['description'] if 'description' in event else pass
         fake_object['start'] = isodate.parse_datetime(instance.isoformat())
         fake_object['end'] = isodate.parse_datetime((event_end-event_start+instance).isoformat())  #.isoformat()
         fake_object['sid'] = str(event['id'])

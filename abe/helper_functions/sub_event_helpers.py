@@ -130,7 +130,10 @@ def instance_creation(event, end=None):
         rByDay = None
     else:
         rByMonthDay = int(recurrence['by_month_day']) if 'by_month_day' in recurrence else None
-        rByMonth = int(recurrence['by_month']) if 'by_month' in recurrence else None
+        if 'by_month' in recurrence:
+            rByMonth = [int(x) for x in recurrence['by_month']]
+        else:
+            rByMonth = None
         if 'by_day' in recurrence:
             rByDay = []
             for i in recurrence['by_day']:
