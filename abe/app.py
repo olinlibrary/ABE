@@ -52,7 +52,6 @@ api.add_resource(LabelApi, '/labels/', methods=['GET', 'POST'], endpoint='label'
 api.add_resource(LabelApi, '/labels/<string:label_name>', methods=['GET', 'PUT', 'PATCH', 'DELETE'], endpoint='label_name')
 
 api.add_resource(ICSApi, '/ics/', methods=['GET', 'POST'], endpoint='ics')
-api.add_resource(ICSApi, '/ics/<string:ics_name>', methods=['GET', 'PUT', 'PATCH', 'DELETE'], endpoint='ics_name')
 
 
 @app.route('/')

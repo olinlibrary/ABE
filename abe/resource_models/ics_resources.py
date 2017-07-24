@@ -24,10 +24,15 @@ from abe.helper_functions.ics_helpers import mongo_to_ics, extract_ics
 
 class ICSApi(Resource):
     """API for interacting with ics feeds"""
-    def get(self, ics_name=None):
+
+    def get(self):
+        """
+        Returns an ICS feed when requested
+        """
         # configure ics specs from fullcalendar to be mongoengine searchable
         query = event_query(get_to_event_search(request))
         results = db.Event.objects(__raw__=query)
+        # converts mongoDB objects to an ICS format
         response = mongo_to_ics(results)
         logging.debug("ics feed created")
         cd = "attachment;filename=abe.ics"
@@ -36,10 +41,12 @@ class ICSApi(Resource):
                    headers={"Content-Disposition": cd})
 
     def post(self):
+        """
+        Converts an ICS feed input to mongoDB objects
+        """
         #reads outside ics feed
         url = request_to_dict(request)
         data = requests.get(url['url'].strip()).content.decode('utf-8')
-        print(url['url'])
         cal = Calendar.from_ical(data)
         if 'labels' in url:
             labels = url['labels']

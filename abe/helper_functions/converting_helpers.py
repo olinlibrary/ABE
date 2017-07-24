@@ -25,11 +25,14 @@ from abe import database as db
 def mongo_to_dict(obj):
     """Get dictionary from mongoengine object
     id is represented as a string
+
+    obj         A mongodb object that will be converted to a dictionary
     """
     return_data = []
     if obj is None:
         return None
 
+    # converts the mongoDB id for documents to a string from an ObjectID object
     if isinstance(obj, Document):
         return_data.append(("id",str(obj.id)))
 
@@ -53,20 +56,33 @@ def mongo_to_dict(obj):
 
 
 def list_field_to_dict(list_field):
+    """
+    Converts a list of mongodb Objects to a dictionary object
+
+    list_field          list of embedded documents or other object types
+    """
 
     return_data = []
 
     for item in list_field:
+        # if list is of embedded documents, convert each document to a dictionary
         if isinstance(item, EmbeddedDocument):
             return_data.append(mongo_to_dict(item))
+        # convert the data type
         else:
             return_data.append(mongo_to_python_type(item,item))
-
 
     return return_data
 
 
 def mongo_to_python_type(field, data):
+    """
+    Converts certain fields to appropriate data types
+
+    field       A field in a mongoDB object
+
+    data        corresponding data to the field
+    """
     if isinstance(field, ObjectIdField):
         return str(data)
     elif isinstance(field, DecimalField):

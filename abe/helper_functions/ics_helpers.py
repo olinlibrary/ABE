@@ -2,10 +2,6 @@
 """ICS helper functions
 helpful inspiration: https://gist.github.com/jason-w/4969476
 """
-#!/usr/bin/env python3
-"""ICS helper functions
-helpful inspiration: https://gist.github.com/jason-w/4969476
-"""
 from mongoengine import ValidationError
 
 import logging
@@ -29,14 +25,31 @@ from abe.helper_functions.sub_event_helpers import create_sub_event, update_sub_
 
 
 def create_ics_event(event,recurrence=False):
-    """creates ICS event definition
     """
+    This funciton creates a base ICS event definition. It uses the Event() class of the 
+    iCalendar library.
+
+    Supports the following arguments:
+    :param event: 
+        A mongodb Event object
+    :param recurrence:
+        A boolean value indicating the event is part of a recurring event series.
+        If True then the UID of the ICS event will correspond to the sub_event id
+        (sid) of the event. A 'RECURRENCE-ID' field will be created with the event 
+        rec_id as its value.
+        If False then the UID of the ICS event will correspond ot the event id (id)
+        of the event.
+    """
+
+    # helper function to truncate all day events to ignore times
     date_to_ics = lambda a: a[:-9].replace('-','')
 
+    # creates the Event
     new_event = Event()
     new_event.add('summary', event['title'])
     new_event.add('location', event['location'])
     new_event.add('description', event['description'])
+
     if event['allDay'] == True:
         start_string = 'dtstart;VALUE=DATE'
         end_string = 'dtend;VALUE=DATE'
