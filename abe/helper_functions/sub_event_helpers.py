@@ -114,6 +114,7 @@ def create_new_sub_event_defintion(sub_event, updates, parent_event):
 
 
 def instance_creation(event, end=None):
+    
     rec_type_list = ['YEARLY', 'MONTHLY', 'WEEKLY', 'DAILY']
 
     day_list = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU']
@@ -122,14 +123,21 @@ def instance_creation(event, end=None):
     ensure_date_time = lambda a: dateutil.parser.parse(a) if not isinstance(a, datetime) else a
 
     rFrequency = rec_type_list.index(recurrence['frequency'])
+    if recurrence['frequency'] == 'YEARLY':
+        start = ensure_date_time(event['start'])
+        rByMonth = int(start.month)
+        rByMonthDay = int(start.day)
+    else:
+        rByMonthDay = int(recurrence['by_month_day']) if 'by_month_day' in recurrence else None
+        rByMonth = int(recurrence['by_month']) if 'by_month' in recurrence else None
+
     rInterval = int(recurrence['interval'])
     if recurrence.forever == True:
         rUntil = ensure_date_time(end) if end is not None else None
     else:
         rUntil = ensure_date_time(recurrence['until']) if 'until' in recurrence else None
     rCount = int(recurrence['count']) if 'count' in recurrence else None
-    rByMonth = recurrence['by_month'] if 'by_month' in recurrence else None
-    rByMonthDay = recurrence['by_month_day'] if 'by_month_day' in recurrence else None
+    
 
     if 'by_day' in recurrence:
         rByDay = []
