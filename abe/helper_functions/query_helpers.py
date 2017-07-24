@@ -11,6 +11,7 @@ import pytz
 from icalendar import Calendar, Event, vCalAddress, vText, vDatetime
 from dateutil.rrule import rrule, MONTHLY, WEEKLY, DAILY, YEARLY
 from datetime import datetime, timedelta, timezone
+from dateutil.relativedelta import relativedelta
 from bson import objectid
 from mongoengine import *
 from icalendar import Calendar
@@ -46,10 +47,14 @@ def get_to_event_search(request):
     for key, process in preprocessing.items():
         if key in search_dict.keys():
             search_dict[key] = process(search_dict[key])
+
+    now = datetime.now()
     if 'start' not in search_dict:
-        search_dict['start'] = datetime(2017,9,20)
+        search_dict['start'] = now + relativedelta(months=-1)
     if 'end' not in search_dict:
-        search_dict['end'] = datetime(2018, 10, 1)
+        search_dict['end'] = now + relativedelta(months=+2)
+    logging.debug("start: {}".format(search_dict['start']))
+    logging.debug("end: {}".format(search_dict['end']))
     return search_dict
 
 

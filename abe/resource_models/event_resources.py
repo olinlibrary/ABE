@@ -60,14 +60,8 @@ class EventApi(Resource):
             if not results:
                 return []
 
-            if 'start' in query_dict:
-                start = query_dict['start']
-            else:
-                start = datetime(2017,6,1)
-            if 'end' in query_dict:
-                end = query_dict['end']
-            else:
-                end = datetime(2017, 9, 20)
+            start = query_dict['start']
+            end = query_dict['end']
 
             events_list = []
             for event in results:
