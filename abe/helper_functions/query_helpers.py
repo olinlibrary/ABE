@@ -53,8 +53,6 @@ def get_to_event_search(request):
         search_dict['start'] = now + relativedelta(months=-1)
     if 'end' not in search_dict:
         search_dict['end'] = now + relativedelta(months=+2)
-    logging.debug("start: {}".format(search_dict['start']))
-    logging.debug("end: {}".format(search_dict['end']))
     return search_dict
 
 
