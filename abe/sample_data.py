@@ -236,7 +236,6 @@ def load_data(
                         'US/Eastern'
                     ).to('utc').datetime
             new_event = db.Event(**event)
-            logging.debug(new_event.start)
             if 'recurrence' in new_event:
                 if new_event.recurrence.forever == False:
                     new_event.recurrence_end = find_recurrence_end(new_event)
