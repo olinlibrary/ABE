@@ -57,8 +57,7 @@ def update_sub_event(received_data, parent_event, sub_event_id, ics=False):
                 updated_sub_event = db.RecurringEventExc(**updated_sub_event_dict)
                 parent_event.update(pull__sub_events___id=sub_event_id)
                 parent_event.update(add_to_set__sub_events=updated_sub_event_dict)
-                if updated_sub_event_dict['forever'] == False:
-                    parent_event.recurrence_end = find_recurrence_end(parent_event)
+                parent_event.recurrence_end = find_recurrence_end(parent_event)
                 parent_event.save()
                 parent_event.reload()
                 return(updated_sub_event)
@@ -69,8 +68,7 @@ def update_sub_event(received_data, parent_event, sub_event_id, ics=False):
                 updated_sub_event = db.RecurringEventExc(**updated_sub_event_dict)
                 parent_event.update(pull__sub_events__rec_id=sub_event_id)
                 parent_event.update(add_to_set__sub_events=updated_sub_event_dict)
-                if updated_sub_event_dict['forever'] == False:
-                    parent_event.recurrence_end = find_recurrence_end(parent_event)
+                parent_event.recurrence_end = find_recurrence_end(parent_event)
                 parent_event.save()
                 parent_event.reload()
                 return(updated_sub_event)
@@ -113,8 +111,7 @@ def create_new_sub_event_defintion(sub_event, updates, parent_event):
     return(sub_event)
 
 
-def instance_creation(event, end=None):
-    
+def instance_creation(event):
     rec_type_list = ['YEARLY', 'MONTHLY', 'WEEKLY', 'DAILY']
 
     day_list = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU']
@@ -123,30 +120,18 @@ def instance_creation(event, end=None):
     ensure_date_time = lambda a: dateutil.parser.parse(a) if not isinstance(a, datetime) else a
 
     rFrequency = rec_type_list.index(recurrence['frequency'])
-    if recurrence['frequency'] == 'YEARLY':
-        start = ensure_date_time(event['start'])
-        rByMonth = int(start.month)
-        rByMonthDay = int(start.day)
-        rByDay = None
-    else:
-        rByMonthDay = int(recurrence['by_month_day']) if 'by_month_day' in recurrence else None
-        rByMonth = int(recurrence['by_month']) if 'by_month' in recurrence else None
-        if 'by_day' in recurrence:
-            rByDay = []
-            for i in recurrence['by_day']:
-                rByDay.append(day_list.index(i))
-            else:
-                rByDay = None
-
     rInterval = int(recurrence['interval'])
-    if recurrence.forever == True:
-        rUntil = ensure_date_time(end) if end is not None else None
-    else:
-        rUntil = ensure_date_time(recurrence['until']) if 'until' in recurrence else None
     rCount = int(recurrence['count']) if 'count' in recurrence else None
-    
+    rUntil = ensure_date_time(recurrence['until']) if 'until' in recurrence else None
+    rByMonth = recurrence['by_month'] if 'by_month' in recurrence else None
+    rByMonthDay = recurrence['by_month_day'] if 'by_month_day' in recurrence else None
 
-    
+    if 'by_day' in recurrence:
+        rByDay = []
+        for i in recurrence['by_day']:
+            rByDay.append(day_list.index(i))
+    else:
+        rByDay = None
 
     rule_list = list(rrule(freq=rFrequency, count=rCount, interval=rInterval, until=rUntil, bymonth=rByMonth, \
         bymonthday=rByMonthDay, byweekday=rByDay, dtstart=ensure_date_time(event['start'])))
@@ -155,7 +140,5 @@ def instance_creation(event, end=None):
 
 
 def find_recurrence_end(event):
-    ensure_date_time = lambda a: dateutil.parser.parse(a) if not isinstance(a, datetime) else a
     rule_list = instance_creation(event)
-    event_end = rule_list[-1] + timedelta(hours=24)
-    return(event_end)
+    return(rule_list[-1])

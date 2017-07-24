@@ -11,7 +11,6 @@ import pytz
 from icalendar import Calendar, Event, vCalAddress, vText, vDatetime
 from dateutil.rrule import rrule, MONTHLY, WEEKLY, DAILY, YEARLY
 from datetime import datetime, timedelta, timezone
-from dateutil.relativedelta import relativedelta
 from bson import objectid
 from mongoengine import *
 from icalendar import Calendar
@@ -47,12 +46,6 @@ def get_to_event_search(request):
     for key, process in preprocessing.items():
         if key in search_dict.keys():
             search_dict[key] = process(search_dict[key])
-
-    now = datetime.now()
-    if 'start' not in search_dict:
-        search_dict['start'] = now + relativedelta(months=-1)
-    if 'end' not in search_dict:
-        search_dict['end'] = now + relativedelta(months=+2)
     return search_dict
 
 
@@ -91,10 +84,7 @@ def event_query(search_dict):
         if key in search_dict.keys():
             query_rec_event.update(get_pattern(search_dict[key]))
 
-    query_forever = {'forever' : True}
-
-    query = {'$or': [query_rec_event, query_reg_event, query_forever]}
-    #logging.debug("this query: {}".format(query))
+    query = {'$or': [query_reg_event,query_rec_event]}
     return query
 
 

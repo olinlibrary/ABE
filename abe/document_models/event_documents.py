@@ -13,10 +13,8 @@ class RecurringEventDefinition(EmbeddedDocument):
     until = DateTimeField()
     by_day = ListField(StringField())
     by_month_day = StringField()
-    by_month = StringField()
+    by_month = ListField(StringField())
     by_year_day = ListField(StringField())
-
-    forever = BooleanField(default=False)
 
 
 class RecurringEventExc(EmbeddedDocument):  # TODO: get a better name
@@ -35,13 +33,6 @@ class RecurringEventExc(EmbeddedDocument):  # TODO: get a better name
     _id = ObjectIdField(default=ObjectId)
     UID = StringField()
     allDay = BooleanField(default=False)
-    meta = {
-        'indexes': [
-            'sid',
-            'rec_id',
-            '_id'
-        ]
-    }
 
 
 class Event(Document):
@@ -66,11 +57,6 @@ class Event(Document):
 
     UID = StringField()
     ics_id = ObjectIdField()
-    meta = {'allow_inheritance': True,
-        'indexes': [
-            'start',
-            'end',
-            'recurrence_end']
-        }
+    meta = {'allow_inheritance': True}  # TODO: set indexes
 
     # TODO: look into clean() function for more advanced data validation

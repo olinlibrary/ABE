@@ -42,7 +42,8 @@ def create_ics_event(event,recurrence=False):
         end_string = 'dtend;VALUE=DATE'
         event_start = date_to_ics(event['start'].isoformat())
         event_end = date_to_ics(event['end'].isoformat())
-        event_end = str(int(event_end) + 1)
+        if (event['end'] - event['start']) < timedelta(days=1):
+            event_end = str(int(event_end) + 1)
     else:
         start_string = 'dtstart'
         end_string = 'dtend'

@@ -223,7 +223,6 @@ def load_data(
     ics_data=sample_ics
 ):
     import logging
-    from .helper_functions.sub_event_helpers import find_recurrence_end
     logging.basicConfig(level=logging.DEBUG)
     if event_data:
         logging.info("Inserting sample event data")
@@ -235,12 +234,7 @@ def load_data(
                         value,
                         'US/Eastern'
                     ).to('utc').datetime
-            new_event = db.Event(**event)
-            if 'recurrence' in new_event:
-                if new_event.recurrence.forever == False:
-                    new_event.recurrence_end = find_recurrence_end(new_event)
-                    logging.info("made some end recurrences: {}".format(new_event.recurrence_end))
-            new_event.save()
+            db.Event(**event).save()
     if label_data:
         logging.info("Inserting sample label data")
         for index, label in enumerate(label_data):
@@ -255,5 +249,4 @@ def load_data(
 
 if __name__ == '__main__':  # import data
     from . import database as db
-    
     load_data(db)
