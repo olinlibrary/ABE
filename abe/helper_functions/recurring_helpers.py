@@ -50,6 +50,8 @@ def placeholder_recurring_creation(instance, events_list, event, edit_recurrence
     event_end = dateutil.parser.parse(str(event['end']))
     event_start = dateutil.parser.parse(str(event['start']))
 
+    fields = ['title', 'location', 'description', 'labels']
+
     repeat = False
     if 'sub_events' in event:
         for individual in event['sub_events']:
@@ -59,13 +61,13 @@ def placeholder_recurring_creation(instance, events_list, event, edit_recurrence
 
     if repeat == False:
         fake_object = {}
-        fake_object['title'] = event['title'] if 'title' in event else pass
-        fake_object['location'] = event['location'] if 'location' in event else pass
-        fake_object['description'] = event['description'] if 'description' in event else pass
         fake_object['start'] = isodate.parse_datetime(instance.isoformat())
         fake_object['end'] = isodate.parse_datetime((event_end-event_start+instance).isoformat())  #.isoformat()
         fake_object['sid'] = str(event['id'])
-        fake_object['labels'] = event['labels']
+
+        for field in fields:
+            if field in event:
+                fake_object[field] = event[field]
 
         events_list.append(fake_object) #json.dumps(fake_object, default=json_util.default))
         if edit_recurrence == True:
