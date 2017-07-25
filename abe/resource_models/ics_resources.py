@@ -40,18 +40,24 @@ class ICSApi(Resource):
                    mimetype="text/calendar",
                    headers={"Content-Disposition": cd})
 
+
     def post(self):
         """
         Converts an ICS feed input to mongoDB objects
         """
-        #reads outside ics feed
-        url = request_to_dict(request)
-        data = requests.get(url['url'].strip()).content.decode('utf-8')
-        cal = Calendar.from_ical(data)
-        if 'labels' in url:
-            labels = url['labels']
-        else:
-            labels = ['unlabeled']
+        try:
+            #reads outside ics feed
+            url = request_to_dict(request)
+            data = requests.get(url['url'].strip()).content.decode('utf-8')
+            cal = Calendar.from_ical(data)
+            if 'labels' in url:
+                labels = url['labels']
+            else:
+                labels = ['unlabeled']
 
-        extract_ics(cal, url['url'], labels)
+            extract_ics(cal, url['url'], labels)
+        except ValidationError as error:
+            return {'error_type': 'validation',
+                    'validation_errors': [str(err) for err in error.errors],
+                    'error_message': error.message}, 400
         

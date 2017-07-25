@@ -24,6 +24,7 @@ from abe.helper_functions.query_helpers import multi_search
 
 class LabelApi(Resource):
     """API for interacting with all labels (searching, creating)"""
+    
     def get(self, label_name=None):
         """Retrieve labels"""
         if label_name:  # use label name/object id if present
@@ -55,7 +56,7 @@ class LabelApi(Resource):
                     'validation_errors': [str(err) for err in error.errors],
                     'error_message': error.message}, 400
         else:  # return success
-            return mongo_to_dict(new_label), 201
+            return mongo_to_dict(new_label), 201 
 
     def put(self, label_name):
         """Modify individual label"""

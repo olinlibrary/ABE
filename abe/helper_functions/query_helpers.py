@@ -32,8 +32,10 @@ def get_to_event_search(request):
         'olin': ['public', 'olin'],
         'students': ['public', 'olin', 'students'],
     }
+
     split_into_list = lambda a: a if isinstance(a, list) else a.split(',')
     ensure_date_time = lambda a: dateutil.parser.parse(a) if not isinstance(a, datetime) else a
+
     preprocessing = {
         'labels': split_into_list,  # split labels on commas if not already list
         'labels_and': split_into_list,
@@ -48,11 +50,13 @@ def get_to_event_search(request):
         if key in search_dict.keys():
             search_dict[key] = process(search_dict[key])
 
+    # create a default date range if none is given
     now = datetime.now()
     if 'start' not in search_dict:
         search_dict['start'] = now + relativedelta(months=-1)
     if 'end' not in search_dict:
         search_dict['end'] = now + relativedelta(months=+2)
+
     return search_dict
 
 
@@ -81,20 +85,22 @@ def event_query(search_dict):
         'visibility': lambda a: {'visibility' : {'$in': a}},
     }
 
+    # query for regular events
     query_reg_event = {}
     for key, get_pattern in params_reg_event.items():
         if key in search_dict.keys():
             query_reg_event.update(get_pattern(search_dict[key]))
-
+    logging.debug("query_reg {}".format(query_reg_event))
+    # query for recurring events with an end date
     query_rec_event = {}
     for key, get_pattern in params_recu_event.items():
         if key in search_dict.keys():
             query_rec_event.update(get_pattern(search_dict[key]))
 
-    query_forever = {'forever' : True}
+    # query for recurring events with no end date
+    query_forever = {'start' : {'$lte': search_dict['end']}, 'forever' : True}
 
     query = {'$or': [query_rec_event, query_reg_event, query_forever]}
-    #logging.debug("this query: {}".format(query))
     return query
 
 

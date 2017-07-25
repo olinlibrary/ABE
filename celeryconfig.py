@@ -12,7 +12,7 @@ CELERY_MONGODB_BACKEND_SETTINGS = {
 #used to schedule tasks periodically and passing optional arguments 
 #Can be very useful. Celery does not seem to support scheduled task but only periodic
 CELERYBEAT_SCHEDULE = {
-    'refresh-every-1-hour': {
+    'refresh-every-2-hours': {
         'task': 'tasks.refresh_calendar',
         'schedule': timedelta(seconds=7200),
     },

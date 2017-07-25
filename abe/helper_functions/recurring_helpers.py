@@ -25,16 +25,25 @@ from abe.helper_functions.sub_event_helpers import sub_event_to_full, instance_c
 
 def recurring_to_full(event, events_list, start, end):
     """Expands recurring events in MongoDb to multiple placeholder objects
+    event           mongoDB event
+
+    events_list     list of events to be returned
+
+    start, end      start and end indicating the query date range
     """
-    if 'sub_events' in event:
+
+    if 'sub_events' in event: # if there are sub_events in event
         for sub_event in event['sub_events']:
             if 'start' in sub_event:
+                # if the sub_event fits into the date range and is not deleted
                 if sub_event['start'] <= end and sub_event['start'] >= start \
-                    and sub_event['deleted']==False:
+                    and sub_event['deleted']==False: 
                     events_list.append(sub_event_to_full(mongo_to_dict(sub_event), event))
 
+    # generate a list of all datetimes a recurring event would occur 
     rule_list = instance_creation(event, end)
 
+    # for each instance create a full event definition based on its parent event
     for instance in rule_list:
         if instance >= start and instance < end:
             events_list = placeholder_recurring_creation(instance, events_list, event)
@@ -45,6 +54,10 @@ def recurring_to_full(event, events_list, start, end):
 def placeholder_recurring_creation(instance, events_list, event, edit_recurrence=False):
     """appends a dummy dictionary to a list if it's to display on the calendar
     returns a single dummy dicitionary before editing of a single reucrring event
+
+    edit_recurrence         If true, this function will return a singular fake_object
+                            so that fullcalendar can display the information for someone
+                            who wants to edit a sub_event for the first time
     """
     instance = dateutil.parser.parse(str(instance))
     event_end = dateutil.parser.parse(str(event['end']))
@@ -56,21 +69,24 @@ def placeholder_recurring_creation(instance, events_list, event, edit_recurrence
     if 'sub_events' in event:
         for individual in event['sub_events']:
             indiv = dateutil.parser.parse(str(individual['rec_id']))
-            if instance == indiv: # or (instance == indiv and individual['deleted']==True):
+            # checks to see if the instance actually occurs at the time a sub_event 
+            # would have occurred
+            if instance == indiv: 
                 repeat = True
 
-    if repeat == False:
+    if repeat == False: # if the instance is not a repeat of a sub_event
         fake_object = {}
         fake_object['start'] = isodate.parse_datetime(instance.isoformat())
-        fake_object['end'] = isodate.parse_datetime((event_end-event_start+instance).isoformat())  #.isoformat()
+        fake_object['end'] = isodate.parse_datetime((event_end-event_start+instance).isoformat())
         fake_object['sid'] = str(event['id'])
 
         for field in fields:
             if field in event:
                 fake_object[field] = event[field]
 
-        events_list.append(fake_object) #json.dumps(fake_object, default=json_util.default))
-        if edit_recurrence == True:
+        events_list.append(fake_object)
+
+        if edit_recurrence == True: # return only the fake_object
             fake_object['rec_id'] = isodate.parse_datetime(instance.isoformat())
             return(fake_object)
     return(events_list)

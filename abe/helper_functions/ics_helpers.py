@@ -30,15 +30,14 @@ def create_ics_event(event,recurrence=False):
     iCalendar library.
 
     Supports the following arguments:
-    :param event: 
-        A mongodb Event object
-    :param recurrence:
-        A boolean value indicating the event is part of a recurring event series.
-        If True then the UID of the ICS event will correspond to the sub_event id
-        (sid) of the event. A 'RECURRENCE-ID' field will be created with the event 
-        rec_id as its value.
-        If False then the UID of the ICS event will correspond ot the event id (id)
-        of the event.
+    event           A mongodb Event object
+
+    recurrence      A boolean value indicating the event is part of a recurring event series.
+                    If True then the UID of the ICS event will correspond to the sub_event id
+                    (sid) of the event. A 'RECURRENCE-ID' field will be created with the event 
+                    rec_id as its value.
+                    If False then the UID of the ICS event will correspond to the event id (id)
+                    of the event.
     """
 
     # helper function to truncate all day events to ignore times
@@ -80,7 +79,13 @@ def create_ics_event(event,recurrence=False):
 
 
 def create_ics_recurrence(new_event, recurrence):
-    """creates the ICS rrule definition
+    """
+    creates the ICS rrule definition
+
+    new_event           The current ics event that the recurrence 
+                        definition will be added to
+
+    recurrence          The recurrence defintion as stored in mongoDB
     """
     rec_ics_string = {}
     frequency = recurrence['frequency']
@@ -112,8 +117,8 @@ def create_ics_recurrence(new_event, recurrence):
     return(new_event)
 
 def mongo_to_ics(events):
-    """creates the iCal based on the MongoDb database
-    and events submitted
+    """
+    creates the iCal based on the MongoDb database and events submitted
     """
 
     #initialize calendar object
@@ -121,11 +126,11 @@ def mongo_to_ics(events):
     cal.add('PRODID', 'ABE')
     cal.add('VERSION', '2.0')
     for event in events:
-        new_event = create_ics_event(event)
+        new_event = create_ics_event(event) # create the base event fields in ics format
 
         recurrence = event['recurrence']
         if recurrence:
-            new_event = create_ics_recurrence(new_event, recurrence)
+            new_event = create_ics_recurrence(new_event, recurrence) # create the rrule field
 
         if event['sub_events']:
             for sub_event in event['sub_events']:
@@ -142,29 +147,48 @@ def mongo_to_ics(events):
 
 
 def ics_to_dict(component, labels, ics_id=None):
+    """
+    Converts an ics component to a dictionary that 
+    can be used to create or update a mongoDB object
+
+    component       The ics component representing a singular event
+
+    labels          labels given
+
+    ics_id          the objectId corresponding to the ICS object that 
+                    this component comes from 
+    """
     event_def = {}
+
     utc = pytz.utc
     convert_timezone = lambda a: a.astimezone(utc)
+
     event_def['title'] = str(component.get('summary'))
     event_def['description'] = str(component.get('description'))
     event_def['location'] = str(component.get('location'))
+
     event_def['start'] = convert_timezone(component.get('dtstart').dt)
     event_def['end'] = convert_timezone(component.get('dtend').dt)
+
     event_def['labels'] = labels
     
-    if component.get('recurrence-id'):
+    if component.get('recurrence-id'): # if this is the ics equivalent of a sub_event
         event_def['rec_id'] = convert_timezone(component.get('recurrence-id').dt)
-    else:
+    else: # if this is a normal event or a parent event
         event_def['ics_id'] = ics_id
+
     event_def['UID'] = str(component.get('uid'))
-    if component.get('rrule'):
+
+    if component.get('rrule'): # if this is an event that defines a recurrence
         rrule = component.get('rrule')
         rec_def = {}
         rec_def['frequency'] = str(rrule.get('freq')[0])
         if 'until' in rrule:
             rec_def['until'] = convert_timezone(rrule.get('until')[0])
-        if 'count' in rrule:
+        elif 'count' in rrule:
             rec_def['count'] = str(rrule.get('count')[0])
+        else:
+            event_def['forever'] = True
         if 'BYDAY' in rrule:
             rec_def['by_day'] = rrule.get('BYDAY')
         if 'BYMONTHDAY' in rrule:
@@ -179,40 +203,57 @@ def ics_to_dict(component, labels, ics_id=None):
     
 
 def extract_ics(cal, ics_url, labels=None):
+    """
+    Extracts the ics components and stores them 
+
+    cal         the ics calendar
+
+    ics_url     the ics feed url
+
+    labels      labels to assign to the events
+    """
     results = db.ICS.objects(url=ics_url).first()
     logging.debug("ics feeds: {}".format(mongo_to_dict(results)))
-    if results:
+    
+    if results: # if this feed has already been inputted
         for component in cal.walk():
             if component.name == "VEVENT":
                 last_modified = component.get('LAST-MODIFIED').dt
                 now = datetime.now(timezone.utc)
                 difference = now - last_modified
-                if difference.total_seconds() < 7200:
+                # if an event has been modified in the last two hours
+                if difference.total_seconds() < 7200: 
                     update_ics_to_mongo(component, labels)
-    else:
+    else: # if this is the first time this ics feed has been inputted
+        # save the ics url feed as an ICS object
         ics_object = db.ICS(**{'url':ics_url}).save()
         temporary_dict = []
-        timezone_info = ''
         for component in cal.walk():
             if component.name == "VEVENT":
+                # convert the event to a dictionary
                 com_dict = ics_to_dict(component, labels, ics_object.id)
-                normal_event = db.Event.objects(__raw__ = {'UID':com_dict['UID']}).first()
-                if 'rec_id' in com_dict:
-                    if normal_event is not None:
+
+                if 'rec_id' in com_dict: # if this is a sub_event
+                    # search for another event with the same UID
+                    normal_event = db.Event.objects(__raw__ = {'UID':com_dict['UID']}).first()
+                    if normal_event is not None: # if its parent event has already been created
                         create_sub_event(com_dict, normal_event)
                         logging.debug("sub event created in new instance")
-                    else:
+                    else: # if its parent event has not been created
+                        # store the dict in a list to come back to later
                         temporary_dict.append(com_dict)
                         logging.debug("temporarily saved recurring event as dict")
-                else:
+                else: # if this is a regular event
                     new_event = db.Event(**com_dict).save()
-                    if new_event.labels == []:
+                    if new_event.labels == []: # if the event has no labels
                         new_event.labels = ['unlabeled']
-                    if 'recurrence' in new_event:
-                        new_event.recurrence_end = find_recurrence_end(new_event)
-                        logging.debug("made end_recurrence: {}".format(new_event.recurrence_end))
+                    if 'recurrence' in new_event: # if the event has no recurrence_end
+                        if new_event.recurrence.forever == False:
+                            new_event.recurrence_end = find_recurrence_end(new_event)
+                            logging.debug("made end_recurrence: {}".format(new_event.recurrence_end))
                     new_event.save()
 
+        # cycle through all the events in the temporary list
         for sub_event_dict in temporary_dict:
             normal_event = db.Event.objects(__raw__ = {'UID':sub_event_dict['UID']}).first()
             create_sub_event(sub_event_dict, normal_event)
@@ -220,32 +261,42 @@ def extract_ics(cal, ics_url, labels=None):
                 
 
 def update_ics_to_mongo(component, labels):
+    """
+    Updates the mongoDB database with an ical component
+    """
+    # find the event with this UID
     normal_event = db.Event.objects(__raw__ = {'UID' : str(component.get('UID'))}).first()
-    if component.get('recurrence-id'):
-        parent_sub_event = db.Event.objects(__raw__ = {'sub_events.rec_id' : component.get('recurrence-id').dt}).first()
+    if component.get('recurrence-id'): # if this is the ics equivalent of a sub_event
+        # check to see if a sub_event with the rec_id and UID already exists
+        parent_sub_event = db.Event.objects(__raw__ = 
+            {'$and' : [
+                {'sub_events.rec_id' : component.get('recurrence-id').dt},
+                {'UID' : str(component.get('UID'))}]}).first()
         logging.debug("parent event found for reccurrence-id: {}".format(component.get('recurrence-id').dt))
     else:
         parent_sub_event = None
     event_dict = ics_to_dict(component, labels)
-    if parent_sub_event:
+    if parent_sub_event: # if the sub_event already exists
         logging.debug("sub event updated")
         update_sub_event(event_dict, parent_sub_event,event_dict['rec_id'], True)
-    elif normal_event:
-        if component.get('recurrence-id'):
+    elif normal_event: # if the sub_event doesn't already exist
+        if component.get('recurrence-id'): # if this is a sub_event
             logging.debug("new sub event created")
             create_sub_event(event_dict, normal_event)
-            
-        else:
+        else: # if this is a normal_event
             logging.debug("normal event updated")
             normal_event.update(**event_dict)
-            normal_event.reload()
-             
-    else:
+            normal_event.reload()      
+    else: # if this is a new event entirely
         logging.debug("normal event created")
         db.Event(**event_dict).save()
         
 
 def update_ics_feed():
+    """
+    updates the mongoDB database based on all the ics feeds tored in ICS
+    called by the celery worker every 2 hours
+    """
     all_ics_feeds = db.ICS.objects(__raw__ = {})
     for feed in all_ics_feeds:
         data = requests.get(feed['url'].strip()).content.decode('utf-8')
