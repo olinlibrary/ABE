@@ -234,7 +234,6 @@ def extract_ics(cal, ics_url, labels=None):
             if component.name == "VEVENT":
                 # convert the event to a dictionary
                 com_dict = ics_to_dict(component, labels, ics_object.id)
-                logging.debug("comdict labels: {}".format(com_dict['labels']))
 
                 if 'rec_id' in com_dict: # if this is a sub_event
                     # search for another event with the same UID
