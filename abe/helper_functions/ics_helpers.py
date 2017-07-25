@@ -42,6 +42,7 @@ def create_ics_event(event,recurrence=False):
 
     # helper function to truncate all day events to ignore times
     date_to_ics = lambda a: a[:-9].replace('-','')
+    ensure_date_time = lambda a: dateutil.parser.parse(a) if not isinstance(a, datetime) else a
 
     # creates the Event
     new_event = Event()
@@ -52,16 +53,17 @@ def create_ics_event(event,recurrence=False):
     if event['allDay'] == True:
         start_string = 'dtstart;VALUE=DATE'
         end_string = 'dtend;VALUE=DATE'
-        event_start = date_to_ics(event['start'].isoformat())
-        event_end = date_to_ics(event['end'].isoformat())
+        event_start = date_to_ics(ensure_date_time(event['start']).isoformat())
+        event_end = date_to_ics(ensure_date_time(event['end']).isoformat())
         event_end = str(int(event_end) + 1)
     else:
         start_string = 'dtstart'
         end_string = 'dtend'
         
         utc = pytz.utc
-        event_start = utc.localize(event['start'])
-        event_end = utc.localize(event['end'])
+        
+        event_start = utc.localize(ensure_date_time(event['start']))
+        event_end = utc.localize(ensure_date_time(event['end']))
 
     new_event.add(start_string, event_start)
     if 'end' in event:
@@ -72,7 +74,7 @@ def create_ics_event(event,recurrence=False):
         uid = str(event['id'])
     else:
         uid = str(event['sid'])
-        new_event.add('RECURRENCE-ID', event['rec_id'])
+        new_event.add('RECURRENCE-ID', ensure_date_time(event['rec_id']))
 
     new_event.add('UID', uid)
     return(new_event)
@@ -223,10 +225,10 @@ def extract_ics(cal, ics_url, labels=None):
                 difference = now - last_modified
                 # if an event has been modified in the last two hours
                 if difference.total_seconds() < 7200: 
-                    update_ics_to_mongo(component, labels)
+                    update_ics_to_mongo(component, results.labels)
     else: # if this is the first time this ics feed has been inputted
         # save the ics url feed as an ICS object
-        ics_object = db.ICS(**{'url':ics_url}).save()
+        ics_object = db.ICS(**{'url':ics_url, 'labels':labels}).save()
         temporary_dict = []
         for component in cal.walk():
             if component.name == "VEVENT":

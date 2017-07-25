@@ -12,5 +12,9 @@ class ICS(Document):
 	url 			Stores the link to an ics feed. Required
 					Takes a stringfield
 
+	labels 			Labels associated with all events from this feed. Required
+					Takes a list of strings with choice from the labels database
+
 	"""
 	url = StringField()
+	labels = ListField(StringField())

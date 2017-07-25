@@ -157,10 +157,8 @@ def instance_creation(event, end=None):
         rUntil = ensure_date_time(recurrence['until']).replace(tzinfo=None) if 'until' in recurrence else None
     rCount = int(recurrence['count']) if 'count' in recurrence else None
     
-    logging.debug("byday: {}".format(rByDay))
     rule_list = list(rrule(freq=rFrequency, count=rCount, interval=rInterval, until=rUntil, bymonth=rByMonth, \
         bymonthday=rByMonthDay, byweekday=rByDay, dtstart=ensure_date_time(event['start']).replace(tzinfo=None)))
-    logging.debug("rule_list for {} is {}".format(event['title'], rule_list))
     return(rule_list)
 
 
