@@ -90,7 +90,6 @@ def event_query(search_dict):
     for key, get_pattern in params_reg_event.items():
         if key in search_dict.keys():
             query_reg_event.update(get_pattern(search_dict[key]))
-    logging.debug("query_reg {}".format(query_reg_event))
     # query for recurring events with an end date
     query_rec_event = {}
     for key, get_pattern in params_recu_event.items():
