@@ -97,8 +97,8 @@ def sub_event_to_full(sub_event_dict, event):
                 sub_event_dict[field] = dateutil.parser.parse(str(sub_event_dict[field]))
             else:
                 sub_event_dict[field] = event[field]
+    sub_event_dict['labels'] = event['labels']
     sub_event_dict["id"] = sub_event_dict.pop("_id")
-
     return(sub_event_dict)
 
 def access_sub_event(parent_event, sub_event_id):
@@ -147,8 +147,8 @@ def instance_creation(event, end=None):
             rByDay = []
             for i in recurrence['by_day']:
                 rByDay.append(day_list.index(i))
-            else:
-                rByDay = None
+        else:
+            rByDay = None
 
     rInterval = int(recurrence['interval'])
     if recurrence.forever == True:
@@ -157,10 +157,10 @@ def instance_creation(event, end=None):
         rUntil = ensure_date_time(recurrence['until']).replace(tzinfo=None) if 'until' in recurrence else None
     rCount = int(recurrence['count']) if 'count' in recurrence else None
     
-
+    logging.debug("byday: {}".format(rByDay))
     rule_list = list(rrule(freq=rFrequency, count=rCount, interval=rInterval, until=rUntil, bymonth=rByMonth, \
         bymonthday=rByMonthDay, byweekday=rByDay, dtstart=ensure_date_time(event['start']).replace(tzinfo=None)))
-
+    logging.debug("rule_list for {} is {}".format(event['title'], rule_list))
     return(rule_list)
 
 
