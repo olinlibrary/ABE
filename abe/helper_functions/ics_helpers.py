@@ -10,7 +10,7 @@ import pytz
 
 from icalendar import Calendar, Event, vCalAddress, vText, vDatetime, Timezone
 from dateutil.rrule import rrule, MONTHLY, WEEKLY, DAILY, YEARLY
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, date
 from bson import objectid
 from mongoengine import *
 from icalendar import Calendar
@@ -163,7 +163,7 @@ def ics_to_dict(component, labels, ics_id=None):
     event_def = {}
 
     utc = pytz.utc
-    convert_timezone = lambda a: a.astimezone(utc)
+    convert_timezone = lambda a: a.astimezone(utc) if not isinstance(a, date) else a
 
     event_def['title'] = str(component.get('summary'))
     event_def['description'] = str(component.get('description'))
@@ -176,6 +176,7 @@ def ics_to_dict(component, labels, ics_id=None):
     
     if component.get('recurrence-id'): # if this is the ics equivalent of a sub_event
         event_def['rec_id'] = convert_timezone(component.get('recurrence-id').dt)
+        logging.debug("rec_ids {}".format(event_def['rec_id']))
     else: # if this is a normal event or a parent event
         event_def['ics_id'] = ics_id
 
