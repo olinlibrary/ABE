@@ -10,7 +10,7 @@ import pytz
 
 from icalendar import Calendar, Event, vCalAddress, vText, vDatetime
 from dateutil.rrule import rrule, MONTHLY, WEEKLY, DAILY, YEARLY
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, date
 from bson import objectid
 from mongoengine import *
 from icalendar import Calendar
@@ -129,12 +129,13 @@ def instance_creation(event, end=None):
     day_list = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU']
 
     recurrence = event.recurrence
-    ensure_date_time = lambda a: dateutil.parser.parse(a) if not isinstance(a, datetime) else a
+    ensure_date_time = lambda a: dateutil.parser.parse(a) if not isinstance(a, datetime) and not isinstance(a, date) else a
+    convert_timezone = lambda a: a.replace(tzinfo=pytz.UTC) if not isinstance(a, date) else a
 
     rFrequency = rec_type_list.index(recurrence['frequency'])
     if recurrence['frequency'] == 'YEARLY': 
         # extracts the month and day from the date 
-        start = ensure_date_time(event['start']).replace(tzinfo=None)
+        start = convert_timezone(ensure_date_time(event['start']))
         rByMonth = int(start.month)
         rByMonthDay = int(start.day)
         rByDay = None
@@ -153,13 +154,13 @@ def instance_creation(event, end=None):
 
     rInterval = int(recurrence['interval'])
     if recurrence.forever == True:
-        rUntil = ensure_date_time(end).replace(tzinfo=None) if end is not None else None
+        rUntil = convert_timezone(ensure_date_time(end)) if end is not None else None
     else:
-        rUntil = ensure_date_time(recurrence['until']).replace(tzinfo=None) if 'until' in recurrence else None
+        rUntil = convert_timezone(ensure_date_time(recurrence['until'])) if 'until' in recurrence else None
     rCount = int(recurrence['count']) if 'count' in recurrence else None
     
     rule_list = list(rrule(freq=rFrequency, count=rCount, interval=rInterval, until=rUntil, bymonth=rByMonth, \
-        bymonthday=rByMonthDay, byweekday=rByDay, dtstart=ensure_date_time(event['start']).replace(tzinfo=None)))
+        bymonthday=rByMonthDay, byweekday=rByDay, dtstart=convert_timezone(ensure_date_time(event['start']))))
     return(rule_list)
 
 

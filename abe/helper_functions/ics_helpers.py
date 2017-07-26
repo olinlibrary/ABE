@@ -191,7 +191,7 @@ def ics_to_dict(component, labels, ics_id=None):
         elif 'count' in rrule:
             rec_def['count'] = str(rrule.get('count')[0])
         else:
-            event_def['forever'] = True
+            rec_def['forever'] = True
         if 'BYDAY' in rrule:
             rec_def['by_day'] = rrule.get('BYDAY')
         if 'BYMONTHDAY' in rrule:
