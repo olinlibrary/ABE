@@ -130,17 +130,21 @@ def instance_creation(event, end=None):
 
     recurrence = event.recurrence
     ensure_date_time = lambda a: dateutil.parser.parse(a) if not isinstance(a, datetime) and not isinstance(a, date) else a
-    convert_timezone = lambda a: a.replace(tzinfo=pytz.UTC) if isinstance(a, datetime) else a
+    convert_timezone = lambda a: a.replace(tzinfo=None) if isinstance(a, datetime) else a
 
     rFrequency = rec_type_list.index(recurrence['frequency'])
     rStart = convert_timezone(ensure_date_time(event['start']))
     if recurrence['frequency'] == 'YEARLY': 
         # extracts the month and day from the date 
-        rByMonth = int(start.month)
-        rByMonthDay = int(start.day)
+        rByMonth = int(rStart.month)
+        rByMonthDay = int(rStart.day)
         rByDay = None
     else:
-        rByMonthDay = int(recurrence['by_month_day']) if 'by_month_day' in recurrence else None
+        if 'by_month_day' in recurrence:
+            rByMonthDay = [int(x) for x in recurrence['by_month_day']]
+        else:
+            rByMonthDay = None
+        
         if 'by_month' in recurrence:
             rByMonth = [int(x) for x in recurrence['by_month']]
         else:
@@ -158,6 +162,7 @@ def instance_creation(event, end=None):
     else:
         rUntil = convert_timezone(ensure_date_time(recurrence['until'])) if 'until' in recurrence else None
     rCount = int(recurrence['count']) if 'count' in recurrence else None
+    logging.debug("rUntil: {}, rStart: {}".format(rUntil,rStart))
     rule_list = list(rrule(freq=rFrequency, count=rCount, interval=rInterval, until=rUntil, bymonth=rByMonth, \
         bymonthday=rByMonthDay, byweekday=rByDay, dtstart=rStart))
     return(rule_list)

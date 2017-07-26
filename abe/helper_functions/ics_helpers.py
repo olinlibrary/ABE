@@ -195,7 +195,7 @@ def ics_to_dict(component, labels, ics_id=None):
         if 'BYDAY' in rrule:
             rec_def['by_day'] = rrule.get('BYDAY')
         if 'BYMONTHDAY' in rrule:
-            rec_def['by_month_day'] = rrule.get('BYMONTHDAY')
+            rec_def['by_month_day'] = [str(x) for x in rrule.get('BYMONTHDAY')]
         if 'INTERVAL' in rrule:
             rec_def['interval'] = str(rrule.get('INTERVAL')[0])
         else:
@@ -247,7 +247,10 @@ def extract_ics(cal, ics_url, labels=None):
                         temporary_dict.append(com_dict)
                         logging.debug("temporarily saved recurring event as dict")
                 else: # if this is a regular event
-                    new_event = db.Event(**com_dict).save()
+                    try:
+                        new_event = db.Event(**com_dict).save()
+                    except:
+                        logging.debug("com_dict: {}".format(com_dict))
                     if new_event.labels == []: # if the event has no labels
                         new_event.labels = ['unlabeled']
                     if 'recurrence' in new_event: # if the event has no recurrence_end

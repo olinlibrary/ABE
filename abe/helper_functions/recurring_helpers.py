@@ -45,7 +45,8 @@ def recurring_to_full(event, events_list, start, end):
 
     # for each instance create a full event definition based on its parent event
     for instance in rule_list:
-        if instance >= start and instance < end:
+        convert_timezone = lambda a: a.replace(tzinfo=pytz.UTC) if isinstance(a, datetime) else a
+        if convert_timezone(instance) >= convert_timezone(start) and convert_timezone(instance) < convert_timezone(end):
             events_list = placeholder_recurring_creation(instance, events_list, event)
 
     return(events_list)
