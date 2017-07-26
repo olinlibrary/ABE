@@ -55,7 +55,7 @@ def update_sub_event(received_data, parent_event, sub_event_id, ics=False):
                         if the update is coming from an ics feed:
                             - will be a rec_id (datetime object)
     """
-    convert_timezone = lambda a: a.replace(tzinfo=pytz.UTC) if not isinstance(a, date) else a
+    convert_timezone = lambda a: a.replace(tzinfo=pytz.UTC) if isinstance(a, datetime) else a
     for sub_event in parent_event.sub_events:
         if ics == False: # if this update is not coming from an ics feed
             # if the sub_event to be updated's id matches the id of the received_data
@@ -130,12 +130,12 @@ def instance_creation(event, end=None):
 
     recurrence = event.recurrence
     ensure_date_time = lambda a: dateutil.parser.parse(a) if not isinstance(a, datetime) and not isinstance(a, date) else a
-    convert_timezone = lambda a: a.replace(tzinfo=pytz.UTC) if not isinstance(a, date) else a
+    convert_timezone = lambda a: a.replace(tzinfo=pytz.UTC) if isinstance(a, datetime) else a
 
     rFrequency = rec_type_list.index(recurrence['frequency'])
+    rStart = convert_timezone(ensure_date_time(event['start']))
     if recurrence['frequency'] == 'YEARLY': 
         # extracts the month and day from the date 
-        start = convert_timezone(ensure_date_time(event['start']))
         rByMonth = int(start.month)
         rByMonthDay = int(start.day)
         rByDay = None
@@ -158,9 +158,8 @@ def instance_creation(event, end=None):
     else:
         rUntil = convert_timezone(ensure_date_time(recurrence['until'])) if 'until' in recurrence else None
     rCount = int(recurrence['count']) if 'count' in recurrence else None
-    
     rule_list = list(rrule(freq=rFrequency, count=rCount, interval=rInterval, until=rUntil, bymonth=rByMonth, \
-        bymonthday=rByMonthDay, byweekday=rByDay, dtstart=convert_timezone(ensure_date_time(event['start']))))
+        bymonthday=rByMonthDay, byweekday=rByDay, dtstart=rStart))
     return(rule_list)
 
 
