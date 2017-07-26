@@ -247,6 +247,7 @@ def extract_ics(cal, ics_url, labels=None):
                         temporary_dict.append(com_dict)
                         logging.debug("temporarily saved recurring event as dict")
                 else: # if this is a regular event
+                    logging.debug("com_dict: {}".format(com_dict))
                     new_event = db.Event(**com_dict).save()
                     if new_event.labels == []: # if the event has no labels
                         new_event.labels = ['unlabeled']

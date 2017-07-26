@@ -55,6 +55,7 @@ def update_sub_event(received_data, parent_event, sub_event_id, ics=False):
                         if the update is coming from an ics feed:
                             - will be a rec_id (datetime object)
     """
+    convert_timezone = lambda a: a.replace(tzinfo=pytz.UTC) if not isinstance(a, date) else a
     for sub_event in parent_event.sub_events:
         if ics == False: # if this update is not coming from an ics feed
             # if the sub_event to be updated's id matches the id of the received_data
@@ -69,7 +70,7 @@ def update_sub_event(received_data, parent_event, sub_event_id, ics=False):
                 parent_event.reload()
                 return(updated_sub_event)
         elif ics == True: # if this update is coming from an ics feed
-            sub_event_compare = sub_event["rec_id"].replace(tzinfo=pytz.UTC)
+            sub_event_compare = convert_timezone(sub_event["rec_id"])
             if sub_event_compare == sub_event_id:
                 updated_sub_event_dict = create_new_sub_event_defintion(mongo_to_dict(sub_event), received_data, parent_event)
                 updated_sub_event = db.RecurringEventExc(**updated_sub_event_dict)
