@@ -10,7 +10,7 @@ import pytz
 
 from icalendar import Calendar, Event, vCalAddress, vText, vDatetime, Timezone
 from dateutil.rrule import rrule, MONTHLY, WEEKLY, DAILY, YEARLY
-from datetime import datetime, timedelta, timezone, date
+from datetime import datetime, timedelta, timezone, date, time
 from bson import objectid
 from mongoengine import *
 from icalendar import Calendar
@@ -163,7 +163,7 @@ def ics_to_dict(component, labels, ics_id=None):
     event_def = {}
 
     utc = pytz.utc
-    convert_timezone = lambda a: a.astimezone(utc) if not isinstance(a, date) else a
+    convert_timezone = lambda a: a.astimezone(utc) if isinstance(a, datetime) else a
 
     event_def['title'] = str(component.get('summary'))
     event_def['description'] = str(component.get('description'))
@@ -171,12 +171,20 @@ def ics_to_dict(component, labels, ics_id=None):
 
     event_def['start'] = convert_timezone(component.get('dtstart').dt)
     event_def['end'] = convert_timezone(component.get('dtend').dt)
+    if isinstance(event_def['end'], datetime):
+        if event_def['end'].time() == datetime.time(hours=0, minutes=0, seconds=0):
+            event_def['end'] -= timedelta(days=1)
+            event_def['end'].replace(hours=23, minutes=59, seconds=59)
+    elif isinstance(event_def['end'], date):
+        event_def['end'] = event_def['end'] - timedelta(days=1)
+        midnight_time = time(23, 59, 59)
+        event_def['end'] = datetime.combine(event_def['end'], midnight_time)
+        event_def['allDay'] = True
 
     event_def['labels'] = labels
     
     if component.get('recurrence-id'): # if this is the ics equivalent of a sub_event
         event_def['rec_id'] = convert_timezone(component.get('recurrence-id').dt)
-        logging.debug("rec_ids {}".format(event_def['rec_id']))
     else: # if this is a normal event or a parent event
         event_def['ics_id'] = ics_id
 

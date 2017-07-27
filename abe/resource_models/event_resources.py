@@ -105,7 +105,6 @@ class EventApi(Resource):
                 if new_event.recurrence.forever == False: # if it doesn't recurr forever
                     # find the end of the recurrence
                     new_event.recurrence_end = find_recurrence_end(new_event)
-                    logging.debug("found the end of the recurrence: {}".format(new_event.recurrence_end))
             new_event.save()
         except ValidationError as error:
             return {'error_type': 'validation',
