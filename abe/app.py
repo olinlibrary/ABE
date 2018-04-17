@@ -20,7 +20,11 @@ from .resource_models.ics_resources import ICSApi
 
 app = Flask(__name__)
 CORS(app)
-SSLify(app)
+if app.config.get('REQUIRE_SSL'):
+    # Use a few seconds instead of default of one year, for operational
+    # flexibility. This disables one protection that HSTS provides, but since
+    # this is an API server, we don't really need that protection anyway.
+    SSLify(app, age=30)
 api = Api(app)
 
 
@@ -36,6 +40,8 @@ class CustomJSONEncoder(JSONEncoder):
 app.json_encoder = CustomJSONEncoder
 
 # add return representations
+
+
 @api.representation('application/json')
 def output_json(data, code, headers=None):
     resp = jsonify(data)
@@ -45,11 +51,14 @@ def output_json(data, code, headers=None):
 
 # Route resources
 api.add_resource(EventApi, '/events/', methods=['GET', 'POST'], endpoint='event')
-api.add_resource(EventApi, '/events/<string:event_id>', methods=['GET', 'PUT', 'PATCH', 'DELETE'], endpoint='event_id')  # TODO: add route for string/gphycat links
-api.add_resource(EventApi, '/events/<string:event_id>/<string:rec_id>', methods=['GET', 'PUT', 'PATCH', 'DELETE'], endpoint='rec_id')  # TODO: add route for string/gphycat links
+# TODO: add route for string/gphycat links
+api.add_resource(EventApi, '/events/<string:event_id>', methods=['GET', 'PUT', 'PATCH', 'DELETE'], endpoint='event_id')
+api.add_resource(EventApi, '/events/<string:event_id>/<string:rec_id>',
+                 methods=['GET', 'PUT', 'PATCH', 'DELETE'], endpoint='rec_id')  # TODO: add route for string/gphycat links
 
 api.add_resource(LabelApi, '/labels/', methods=['GET', 'POST'], endpoint='label')
-api.add_resource(LabelApi, '/labels/<string:label_name>', methods=['GET', 'PUT', 'PATCH', 'DELETE'], endpoint='label_name')
+api.add_resource(LabelApi, '/labels/<string:label_name>',
+                 methods=['GET', 'PUT', 'PATCH', 'DELETE'], endpoint='label_name')
 
 api.add_resource(ICSApi, '/ics/', methods=['GET', 'POST'], endpoint='ics')
 
@@ -67,12 +76,6 @@ def add_event():
 @app.route('/add_label')
 def add_label():
     return render_template('add_label.html')
-
-
-
-
-
-
 
 
 if __name__ == '__main__':
