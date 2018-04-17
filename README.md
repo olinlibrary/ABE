@@ -85,6 +85,15 @@ Ran 4 tests in 1.124s
 OK
 ```
 
+## Configuration
+
+
+| Name        | Default | Description                   |
+|-------------|---------|-------------------------------|
+| FLASK_DEBUG | False   | Flask debug mode              |
+| PORT        | 3000    | HTTP(S) port                  |
+| REQUIRE_SSL | False   | Use HSTS to redirect to HTTPS |
+
 ## API Documentation
 
 ### abe.olin.build/events/
