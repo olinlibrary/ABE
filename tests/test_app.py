@@ -50,4 +50,31 @@ class AbeTestCase(abe_unittest.TestCase):
                 data=flask.json.dumps(event),
                 content_type='application/json'
             )
-            self.assertEqual(response.status_code, 201)
+            self.assertEqual(response._status_code, 201)
+
+    def test_date_range(self):
+        from abe import database as db
+        sample_data.load_data(db)
+
+        with self.subTest("a six-month query returns some events"):
+            response = self.app.get('/events/?start=2017-01-01&end=2017-07-01')
+            self.assertEqual(response._status_code, 200)
+            self.assertEqual(len(flask.json.loads(response.data)), 25)
+
+        with self.subTest("a one-year query returns all events"):
+            response = self.app.get('/events/?start=2017-01-01&end=2018-01-01')
+            self.assertEqual(response._status_code, 200)
+            self.assertEqual(len(flask.json.loads(response.data)), 69)
+
+        with self.subTest("a two-year query is too long"):
+            response = self.app.get('/events/?start=2017-01-01&end=2019-01-01')
+            self.assertEqual(response._status_code, 404)
+
+        with self.subTest("a one-year query works for leap years"):
+            response = self.app.get('/events/?start=2020-01-01&end=2021-01-01')
+            self.assertEqual(response._status_code, 200)
+
+        with self.subTest("a query that doesn't expand recurrent events works"):
+            response = self.app.get('/events/?start=2017-06-01&end=2017-06-10&expand=false')
+            self.assertEqual(response._status_code, 200)
+            self.assertEqual(len(flask.json.loads(response.data)), 2)

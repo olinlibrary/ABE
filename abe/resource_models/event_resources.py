@@ -45,7 +45,6 @@ class EventApi(Resource):
 
         rec_id          the rec_id of the sub_event information requested to be retrieved
         """
-
         if event_id:  # use event id if present
             logging.debug('Event requested: ' + event_id)
             result = db.Event.objects(id=event_id).first()
@@ -99,7 +98,7 @@ class EventApi(Resource):
             events_list = []
             for event in results:
 
-                if 'recurrence' in event:  # checks for recurrent events
+                if 'recurrence' in event and request.args.get('expand') != 'false': # checks for recurrent events
                     # expands a recurring event defintion into a json response with individual events
                     events_list = recurring_to_full(event, events_list, start, end)
                 else:  # appends the event information as a dictionary
